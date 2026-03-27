@@ -1,20 +1,194 @@
-.chore-register-container {
+// お手伝い登録画面: 子ども向けの大きなUIでタップ操作しやすいデザイン
+
+.screen {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  padding: 0 16px 24px;
+  box-sizing: border-box;
 }
 
+// ── ヘッダー ──────────────────────────────────────
 .header {
   display: flex;
-  justify-content: flex-end;
-  padding: 8px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0;
+  min-height: 56px;
 }
 
-.content {
+.spacer {
   flex: 1;
+}
+
+// ステップ2で表示する選択中の子どもの名前
+.selected-child-name {
+  font-size: 1.25rem;
+  font-weight: 500;
+  flex: 1;
+  text-align: center;
+}
+
+// ── 質問テキスト ──────────────────────────────────
+.question {
+  text-align: center;
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 24px 0 32px;
+  line-height: 1.3;
+}
+
+// ── カードグリッド（2列） ────────────────────────
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  flex: 1;
+}
+
+// 子ども選択カード
+.child-card {
+  cursor: pointer;
+  border-radius: 16px;
+  transition: box-shadow 0.2s, transform 0.1s;
+  user-select: none;
+
+  // タップしやすい最小高さを確保
+  min-height: 120px;
   display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &:hover {
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+  }
+
+  &:active {
+    transform: scale(0.97);
+  }
+
+  mat-card-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px !important;
+    width: 100%;
+  }
+}
+
+.child-name {
+  font-size: 1.75rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+// お手伝い種類選択カード
+.type-card {
+  cursor: pointer;
+  border-radius: 16px;
+  transition: box-shadow 0.2s, transform 0.1s;
+  user-select: none;
+  min-height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &:hover {
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+  }
+
+  &:active {
+    transform: scale(0.97);
+  }
+
+  mat-card-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 16px !important;
+    width: 100%;
+  }
+}
+
+.type-name {
+  font-size: 1.25rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.type-amount {
+  font-size: 1.1rem;
+  color: rgba(0, 0, 0, 0.6);
+  text-align: center;
+}
+
+// 子ども/種類が未登録の場合のメッセージ
+.empty-message {
+  grid-column: 1 / -1;
+  text-align: center;
+  color: rgba(0, 0, 0, 0.54);
+  font-size: 1rem;
+  margin-top: 32px;
+}
+
+// ── 完了画面 ──────────────────────────────────────
+.done-screen {
   justify-content: center;
   align-items: center;
+}
+
+.done-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 48px;
+}
+
+.done-emoji {
+  font-size: 4rem;
+  line-height: 1;
+}
+
+.done-title {
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 0;
+  text-align: center;
+}
+
+.done-detail {
   font-size: 1.25rem;
-  color: rgba(0, 0, 0, 0.54);
+  margin: 0;
+  text-align: center;
+  color: rgba(0, 0, 0, 0.7);
+}
+
+.done-amount {
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 0;
+  color: #3f51b5; // Angular Material indigo
+  text-align: center;
+}
+
+.reset-button {
+  width: 80%;
+  max-width: 320px;
+  height: 56px;
+  font-size: 1.1rem;
+  border-radius: 28px;
+}
+
+// ── ローディングオーバーレイ ──────────────────────
+.loading-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(255, 255, 255, 0.8);
+  z-index: 100;
 }
