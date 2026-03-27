@@ -1,0 +1,21 @@
+# 環境変数
+backend/.env
+backend/env.json
+
+# AWS SAM ビルド成果物
+backend/.aws-sam/
+
+# Go ビルド成果物
+backend/bootstrap
+backend/**bootstrap
+
+# Node.js (frontend)
+frontend/node_modules/
+frontend/dist/
+
+# Angular
+frontend/.angular/
+
+# OS
+.DS_Store
+Thumbs.db

@@ -1,0 +1,189 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Money Management App - Backend API
+
+Globals:
+  Function:
+    Runtime: provided.al2023
+    Architectures:
+      - x86_64
+    Timeout: 30
+    MemorySize: 128
+    Environment:
+      Variables:
+        MONGODB_URI: !Ref MongoDBUri
+        AUTH0_DOMAIN: !Ref Auth0Domain
+        AUTH0_AUDIENCE: !Ref Auth0Audience
+
+Parameters:
+  MongoDBUri:
+    Type: String
+    Description: MongoDB Atlas connection URI
+    NoEcho: true
+  Auth0Domain:
+    Type: String
+    Description: Auth0 domain (e.g. your-tenant.auth0.com)
+  Auth0Audience:
+    Type: String
+    Description: Auth0 API audience (e.g. https://api.money-management.example.com)
+
+Resources:
+
+  # ─────────────────────────────────────────
+  # API Gateway
+  # ─────────────────────────────────────────
+  MoneyManagementApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: prod
+      Cors:
+        AllowMethods: "'GET,POST,PUT,DELETE,OPTIONS'"
+        AllowHeaders: "'Content-Type,Authorization'"
+        AllowOrigin: "'*'"
+      Auth:
+        DefaultAuthorizer: LambdaAuthorizer
+        Authorizers:
+          LambdaAuthorizer:
+            FunctionArn: !GetAtt AuthorizerFunction.Arn
+            Identity:
+              Headers:
+                - Authorization
+            ResultTtlInSeconds: 300
+
+  # ─────────────────────────────────────────
+  # Lambda Authorizer
+  # ─────────────────────────────────────────
+  AuthorizerFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: makefile
+    Properties:
+      CodeUri: ./
+      Handler: bootstrap
+      Description: Auth0 JWT Authorizer
+
+  AuthorizerFunctionPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !GetAtt AuthorizerFunction.Arn
+      Principal: apigateway.amazonaws.com
+
+  # ─────────────────────────────────────────
+  # Lambda: 子ども管理
+  # ─────────────────────────────────────────
+  ChildrenFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: makefile
+    Properties:
+      CodeUri: ./
+      Handler: bootstrap
+      Description: Children CRUD API
+      Events:
+        ListChildren:
+          Type: Api
+          Properties:
+            RestApiId: !Ref MoneyManagementApi
+            Path: /api/v1/children
+            Method: GET
+        CreateChild:
+          Type: Api
+          Properties:
+            RestApiId: !Ref MoneyManagementApi
+            Path: /api/v1/children
+            Method: POST
+        GetChild:
+          Type: Api
+          Properties:
+            RestApiId: !Ref MoneyManagementApi
+            Path: /api/v1/children/{id}
+            Method: GET
+        UpdateChild:
+          Type: Api
+          Properties:
+            RestApiId: !Ref MoneyManagementApi
+            Path: /api/v1/children/{id}
+            Method: PUT
+        DeleteChild:
+          Type: Api
+          Properties:
+            RestApiId: !Ref MoneyManagementApi
+            Path: /api/v1/children/{id}
+            Method: DELETE
+
+  # ─────────────────────────────────────────
+  # Lambda: おこづかい種類
+  # ─────────────────────────────────────────
+  AllowanceTypesFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: makefile
+    Properties:
+      CodeUri: ./
+      Handler: bootstrap
+      Description: Allowance Types CRUD API
+      Events:
+        ListAllowanceTypes:
+          Type: Api
+          Properties:
+            RestApiId: !Ref MoneyManagementApi
+            Path: /api/v1/allowance-types
+            Method: GET
+        CreateAllowanceType:
+          Type: Api
+          Properties:
+            RestApiId: !Ref MoneyManagementApi
+            Path: /api/v1/allowance-types
+            Method: POST
+        UpdateAllowanceType:
+          Type: Api
+          Properties:
+            RestApiId: !Ref MoneyManagementApi
+            Path: /api/v1/allowance-types/{id}
+            Method: PUT
+        DeleteAllowanceType:
+          Type: Api
+          Properties:
+            RestApiId: !Ref MoneyManagementApi
+            Path: /api/v1/allowance-types/{id}
+            Method: DELETE
+
+  # ─────────────────────────────────────────
+  # Lambda: 収支記録
+  # ─────────────────────────────────────────
+  RecordsFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: makefile
+    Properties:
+      CodeUri: ./
+      Handler: bootstrap
+      Description: Records CRUD API
+      Events:
+        ListRecords:
+          Type: Api
+          Properties:
+            RestApiId: !Ref MoneyManagementApi
+            Path: /api/v1/children/{id}/records
+            Method: GET
+        CreateRecord:
+          Type: Api
+          Properties:
+            RestApiId: !Ref MoneyManagementApi
+            Path: /api/v1/children/{id}/records
+            Method: POST
+        DeleteRecord:
+          Type: Api
+          Properties:
+            RestApiId: !Ref MoneyManagementApi
+            Path: /api/v1/children/{id}/records/{recordId}
+            Method: DELETE
+
+Outputs:
+  ApiUrl:
+    Description: API Gateway endpoint URL
+    Value: !Sub 'https://${MoneyManagementApi}.execute-api.${AWS::Region}.amazonaws.com/prod'
+  AuthorizerFunctionArn:
+    Description: Lambda Authorizer ARN
+    Value: !GetAtt AuthorizerFunction.Arn
