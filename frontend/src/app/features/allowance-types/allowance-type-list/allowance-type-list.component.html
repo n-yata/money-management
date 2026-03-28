@@ -1,0 +1,33 @@
+@if (loading()) {
+  <div class="loading-overlay">
+    <mat-spinner></mat-spinner>
+  </div>
+}
+
+<div class="screen">
+  <div class="header">
+    <button mat-icon-button (click)="goToDashboard()" aria-label="ダッシュボードへ戻る">
+      <mat-icon>arrow_back</mat-icon>
+    </button>
+    <span class="title">種類管理</span>
+    <button mat-icon-button (click)="goToNew()" aria-label="種類を追加">
+      <mat-icon>add</mat-icon>
+    </button>
+  </div>
+
+  @if (!loading() && allowanceTypes().length === 0) {
+    <p class="empty-message">種類が登録されていません</p>
+  }
+
+  <mat-list class="list">
+    @for (allowanceType of allowanceTypes(); track allowanceType.id) {
+      <mat-list-item class="list-item">
+        <span class="item-name">{{ allowanceType.name }}</span>
+        <span class="item-amount">¥{{ allowanceType.amount }}</span>
+        <button mat-icon-button (click)="goToEdit(allowanceType)" aria-label="編集">
+          <mat-icon>edit</mat-icon>
+        </button>
+      </mat-list-item>
+    }
+  </mat-list>
+</div>

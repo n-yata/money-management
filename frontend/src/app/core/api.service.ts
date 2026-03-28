@@ -46,6 +46,16 @@ export interface CreateRecordRequest {
   allowance_type_id?: string;
 }
 
+export interface CreateAllowanceTypeRequest {
+  name: string;
+  amount: number;
+}
+
+export interface UpdateAllowanceTypeRequest {
+  name: string;
+  amount: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class ApiService {
   private http = inject(HttpClient);
@@ -79,6 +89,26 @@ export class ApiService {
   // おこづかいの種類一覧取得
   getAllowanceTypes(): Observable<AllowanceType[]> {
     return this.http.get<AllowanceType[]>(`${this.base}/allowance-types`);
+  }
+
+  // おこづかいの種類詳細取得
+  getAllowanceType(id: string): Observable<AllowanceType> {
+    return this.http.get<AllowanceType>(`${this.base}/allowance-types/${id}`);
+  }
+
+  // おこづかいの種類追加
+  createAllowanceType(body: CreateAllowanceTypeRequest): Observable<AllowanceType> {
+    return this.http.post<AllowanceType>(`${this.base}/allowance-types`, body);
+  }
+
+  // おこづかいの種類更新
+  updateAllowanceType(id: string, body: UpdateAllowanceTypeRequest): Observable<AllowanceType> {
+    return this.http.put<AllowanceType>(`${this.base}/allowance-types/${id}`, body);
+  }
+
+  // おこづかいの種類削除
+  deleteAllowanceType(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.base}/allowance-types/${id}`);
   }
 
   // 収支記録一覧取得（年月フィルタ付き）

@@ -1,0 +1,54 @@
+<div class="screen">
+  <div class="header">
+    <button mat-icon-button (click)="cancel()">
+      <mat-icon>arrow_back</mat-icon>
+    </button>
+    <span class="title">種類追加</span>
+  </div>
+
+  <form [formGroup]="form" (ngSubmit)="save()" class="form">
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>種類名</mat-label>
+      <input matInput formControlName="name" placeholder="例: お皿洗い" />
+      @if (form.get('name')?.hasError('required') && form.get('name')?.touched) {
+        <mat-error>種類名は必須です</mat-error>
+      }
+      @if (form.get('name')?.hasError('maxlength') && form.get('name')?.touched) {
+        <mat-error>種類名は30文字以内で入力してください</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>報酬金額（円）</mat-label>
+      <input matInput type="number" formControlName="amount" placeholder="例: 50" />
+      @if (form.get('amount')?.hasError('required') && form.get('amount')?.touched) {
+        <mat-error>報酬金額は必須です</mat-error>
+      }
+      @if (form.get('amount')?.hasError('min') && form.get('amount')?.touched) {
+        <mat-error>報酬金額は1円以上で入力してください</mat-error>
+      }
+    </mat-form-field>
+
+    <div class="actions">
+      <button mat-button type="button" (click)="cancel()">キャンセル</button>
+      <button
+        mat-flat-button
+        color="primary"
+        type="submit"
+        [disabled]="form.invalid || loading()"
+      >
+        @if (loading()) {
+          <mat-spinner diameter="20"></mat-spinner>
+        } @else {
+          保存
+        }
+      </button>
+    </div>
+  </form>
+
+  @if (loading()) {
+    <div class="loading-overlay">
+      <mat-spinner></mat-spinner>
+    </div>
+  }
+</div>

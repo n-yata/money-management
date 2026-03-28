@@ -60,6 +60,31 @@ export const routes: Routes = [
       ),
   },
   {
+    path: 'allowance-types',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/allowance-types/allowance-type-list/allowance-type-list.component').then(
+        m => m.AllowanceTypeListComponent
+      ),
+  },
+  // allowance-types/new は allowance-types/:id/edit より先に登録する（Angularのルーティング優先順位）
+  {
+    path: 'allowance-types/new',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/allowance-types/allowance-type-new/allowance-type-new.component').then(
+        m => m.AllowanceTypeNewComponent
+      ),
+  },
+  {
+    path: 'allowance-types/:id/edit',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/allowance-types/allowance-type-edit/allowance-type-edit.component').then(
+        m => m.AllowanceTypeEditComponent
+      ),
+  },
+  {
     path: '**',
     redirectTo: '',
   },
