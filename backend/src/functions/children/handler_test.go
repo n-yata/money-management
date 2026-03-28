@@ -12,6 +12,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/n-yata/money-management/backend/src/lib"
 	"github.com/n-yata/money-management/backend/src/models"
 	"github.com/testcontainers/testcontainers-go/modules/mongodb"
 	"go.mongodb.org/mongo-driver/v2/bson"
@@ -25,7 +26,8 @@ var mongoURI string
 
 func TestMain(m *testing.M) {
 	ctx := context.Background()
-	container, err := mongodb.Run(ctx, "mongo:6.0")
+	// WithReplicaSet を使用してシングルノードレプリカセットを起動する（トランザクション対応）
+	container, err := mongodb.Run(ctx, "mongo:6.0", mongodb.WithReplicaSet("rs0"))
 	if err != nil {
 		log.Fatalf("MongoDBコンテナ起動失敗: %v", err)
 	}
@@ -39,6 +41,9 @@ func TestMain(m *testing.M) {
 	if err != nil {
 		log.Fatalf("接続URI取得失敗: %v", err)
 	}
+	// Docker Desktop（Windows）ではレプリカセットの内部IPに接続できないため
+	// directConnection=true でトポロジー探索をスキップする
+	mongoURI += "&directConnection=true"
 
 	os.Exit(m.Run())
 }
@@ -118,9 +123,9 @@ func TestResolveUser(t *testing.T) {
 		db := newTestDB(t)
 		auth0Sub := "auth0|new-user"
 
-		user, err := resolveUser(ctx, db, auth0Sub)
+		user, err := lib.ResolveUser(ctx, db, auth0Sub)
 		if err != nil {
-			t.Fatalf("resolveUser() error = %v", err)
+			t.Fatalf("lib.ResolveUser() error = %v", err)
 		}
 		if user.Auth0Sub != auth0Sub {
 			t.Errorf("user.Auth0Sub = %q, want %q", user.Auth0Sub, auth0Sub)
@@ -134,9 +139,9 @@ func TestResolveUser(t *testing.T) {
 		db := newTestDB(t)
 		existing := newTestUser(t, ctx, db)
 
-		user, err := resolveUser(ctx, db, existing.Auth0Sub)
+		user, err := lib.ResolveUser(ctx, db, existing.Auth0Sub)
 		if err != nil {
-			t.Fatalf("resolveUser() error = %v", err)
+			t.Fatalf("lib.ResolveUser() error = %v", err)
 		}
 		if user.ID != existing.ID {
 			t.Errorf("user.ID = %v, want %v", user.ID, existing.ID)
@@ -147,13 +152,13 @@ func TestResolveUser(t *testing.T) {
 		db := newTestDB(t)
 		auth0Sub := "auth0|idempotent-user"
 
-		user1, err := resolveUser(ctx, db, auth0Sub)
+		user1, err := lib.ResolveUser(ctx, db, auth0Sub)
 		if err != nil {
-			t.Fatalf("1回目: resolveUser() error = %v", err)
+			t.Fatalf("1回目: lib.ResolveUser() error = %v", err)
 		}
-		user2, err := resolveUser(ctx, db, auth0Sub)
+		user2, err := lib.ResolveUser(ctx, db, auth0Sub)
 		if err != nil {
-			t.Fatalf("2回目: resolveUser() error = %v", err)
+			t.Fatalf("2回目: lib.ResolveUser() error = %v", err)
 		}
 		if user1.ID != user2.ID {
 			t.Errorf("IDが一致しない: user1.ID = %v, user2.ID = %v", user1.ID, user2.ID)

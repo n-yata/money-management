@@ -19,6 +19,8 @@ var (
 
 // GetClient はMongoDBクライアントをシングルトンで返す。
 // Lambdaのグローバルスコープでコネクションを再利用し、コールドスタートコストを最小化する。
+// 接続エラーが発生した場合、同一Lambdaコンテナ内では回復しない（sync.Once の制約）。
+// 一時的な接続エラーは Lambda コンテナの自然な再起動（デフォルト数分〜数時間）で回復することを期待する。
 func GetClient() (*mongo.Client, error) {
 	clientOnce.Do(func() {
 		uri := os.Getenv("MONGODB_URI")

@@ -9,7 +9,7 @@ import (
 // Child は子どもを表す。1ユーザーに複数紐づく。
 type Child struct {
 	ID            bson.ObjectID `bson:"_id,omitempty"   json:"id"`
-	UserID        bson.ObjectID `bson:"user_id"         json:"user_id"`
+	UserID        bson.ObjectID `bson:"user_id"         json:"-"` // 内部フィールドのためJSONレスポンスから除外
 	Name          string             `bson:"name"            json:"name"`
 	Age           int                `bson:"age"             json:"age"`
 	BaseAllowance int64              `bson:"base_allowance"  json:"base_allowance"`

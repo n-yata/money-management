@@ -365,6 +365,7 @@ func TestHandler(t *testing.T) {
 			}
 
 			req := events.APIGatewayCustomAuthorizerRequestTypeRequest{
+				MethodArn: "arn:aws:execute-api:ap-northeast-1:123456789:testapi/prod/GET/api/v1/children",
 				Headers: map[string]string{
 					"Authorization": authHeader,
 				},
@@ -424,6 +425,7 @@ func TestHandlerLowercaseAuthHeader(t *testing.T) {
 
 	token := makeTestJWT(t, validPriv, testKid, testIssuer, testAudience, testSub, time.Now().Add(time.Hour))
 	req := events.APIGatewayCustomAuthorizerRequestTypeRequest{
+		MethodArn: "arn:aws:execute-api:ap-northeast-1:123456789:testapi/prod/GET/api/v1/children",
 		Headers: map[string]string{
 			"authorization": "Bearer " + token, // 小文字キー
 		},
@@ -471,10 +473,10 @@ func TestGetPublicKey(t *testing.T) {
 		}))
 		defer server.Close()
 
-		// DefaultTransport を一時的にテストサーバー用に差し替え
-		origTransport := http.DefaultTransport
-		t.Cleanup(func() { http.DefaultTransport = origTransport })
-		http.DefaultTransport = server.Client().Transport
+		// httpClient.Transport を一時的にテストサーバー用に差し替え（C-5対応: httpClient使用）
+		origTransport := httpClient.Transport
+		t.Cleanup(func() { httpClient.Transport = origTransport })
+		httpClient.Transport = server.Client().Transport
 
 		host := strings.TrimPrefix(server.URL, "https://")
 		t.Setenv("AUTH0_DOMAIN", host)
@@ -498,9 +500,9 @@ func TestGetPublicKey(t *testing.T) {
 		}))
 		defer server.Close()
 
-		origTransport := http.DefaultTransport
-		t.Cleanup(func() { http.DefaultTransport = origTransport })
-		http.DefaultTransport = server.Client().Transport
+		origTransport := httpClient.Transport
+		t.Cleanup(func() { httpClient.Transport = origTransport })
+		httpClient.Transport = server.Client().Transport
 
 		host := strings.TrimPrefix(server.URL, "https://")
 		t.Setenv("AUTH0_DOMAIN", host)
@@ -522,9 +524,9 @@ func TestGetPublicKey(t *testing.T) {
 		}))
 		defer server.Close()
 
-		origTransport := http.DefaultTransport
-		t.Cleanup(func() { http.DefaultTransport = origTransport })
-		http.DefaultTransport = server.Client().Transport
+		origTransport := httpClient.Transport
+		t.Cleanup(func() { httpClient.Transport = origTransport })
+		httpClient.Transport = server.Client().Transport
 
 		host := strings.TrimPrefix(server.URL, "https://")
 		t.Setenv("AUTH0_DOMAIN", host)

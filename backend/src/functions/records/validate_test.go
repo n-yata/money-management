@@ -52,6 +52,12 @@ func TestRecordInputValidate(t *testing.T) {
 			errMsg:  "金額は1円以上で入力してください",
 		},
 		{
+			name:    "金額が上限超過（10,000,001円）",
+			input:   recordInput{Type: "income", Amount: 10_000_001, Description: "テスト", Date: "2026-03-01"},
+			wantErr: true,
+			errMsg:  "金額は10,000,000円以下で入力してください",
+		},
+		{
 			name:    "説明が空",
 			input:   recordInput{Type: "income", Amount: 100, Description: "", Date: "2026-03-01"},
 			wantErr: true,

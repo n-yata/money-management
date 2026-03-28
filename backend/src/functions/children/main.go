@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -15,24 +16,15 @@ import (
 	"github.com/n-yata/money-management/backend/src/models"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
-	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
-// ─── レスポンスヘルパー ──────────────────────────────────────
+// ─── 初期化 ──────────────────────────────────────────────────
 
-func jsonResponse(status int, body any) events.APIGatewayProxyResponse {
-	b, _ := json.Marshal(body)
-	return events.APIGatewayProxyResponse{
-		StatusCode: status,
-		Headers:    map[string]string{"Content-Type": "application/json"},
-		Body:       string(b),
+func init() {
+	ctx := context.Background()
+	if err := lib.EnsureIndexes(ctx); err != nil {
+		log.Printf("EnsureIndexes warning: %v", err)
 	}
-}
-
-func errorResponse(status int, code, message string) events.APIGatewayProxyResponse {
-	return jsonResponse(status, map[string]any{
-		"error": map[string]string{"code": code, "message": message},
-	})
 }
 
 // ─── リクエストボディ ────────────────────────────────────────
@@ -60,49 +52,51 @@ func (i childInput) validate() string {
 	return ""
 }
 
-// ─── ユーザー解決 ────────────────────────────────────────────
-
-// resolveUser は auth0_sub に紐づくユーザーを取得する。存在しない場合は新規作成する。
-func resolveUser(ctx context.Context, db *mongo.Database, auth0Sub string) (models.User, error) {
-	col := db.Collection(models.CollectionUsers)
-	var user models.User
-	err := col.FindOne(ctx, bson.M{"auth0_sub": auth0Sub}).Decode(&user)
-	if err == nil {
-		return user, nil
-	}
-	if err != mongo.ErrNoDocuments {
-		return user, err
-	}
-	// 新規ユーザー作成
-	now := time.Now()
-	user = models.User{
-		ID:        bson.NewObjectID(),
-		Auth0Sub:  auth0Sub,
-		CreatedAt: now,
-		UpdatedAt: now,
-	}
-	if _, err := col.InsertOne(ctx, user); err != nil {
-		return user, err
-	}
-	return user, nil
-}
-
 // ─── 残高計算ヘルパー ────────────────────────────────────────
 
-// calcBalanceForChild は指定した childID の残高を計算して返す。
+// childWithBalance はAggregation Pipelineの結果を受け取るための内部型。
+type childWithBalance struct {
+	ID            bson.ObjectID `bson:"_id"`
+	Name          string        `bson:"name"`
+	Age           int           `bson:"age"`
+	BaseAllowance int64         `bson:"base_allowance"`
+	Balance       int64         `bson:"balance"`
+	CreatedAt     time.Time     `bson:"created_at"`
+	UpdatedAt     time.Time     `bson:"updated_at"`
+}
+
+// calcBalanceForChild は指定した childID の残高を Aggregation で計算して返す。
+// 全件ロードを避けることでメモリ効率を高める。
 func calcBalanceForChild(ctx context.Context, db *mongo.Database, childID bson.ObjectID) (int64, error) {
 	col := db.Collection(models.CollectionRecords)
-	cursor, err := col.Find(ctx, bson.M{"child_id": childID})
+	pipeline := mongo.Pipeline{
+		{{Key: "$match", Value: bson.M{"child_id": childID}}},
+		{{Key: "$group", Value: bson.M{
+			"_id": nil,
+			"balance": bson.M{"$sum": bson.M{"$cond": []any{
+				bson.M{"$eq": []any{"$type", "income"}},
+				"$amount",
+				bson.M{"$multiply": []any{"$amount", -1}},
+			}}},
+		}}},
+	}
+
+	cursor, err := col.Aggregate(ctx, pipeline)
 	if err != nil {
 		return 0, err
 	}
 	defer cursor.Close(ctx)
 
-	var records []models.Record
-	if err := cursor.All(ctx, &records); err != nil {
+	var results []struct {
+		Balance int64 `bson:"balance"`
+	}
+	if err := cursor.All(ctx, &results); err != nil {
 		return 0, err
 	}
-	return lib.CalcBalance(records), nil
+	if len(results) == 0 {
+		return 0, nil
+	}
+	return results[0].Balance, nil
 }
 
 // ─── ハンドラー ─────────────────────────────────────────────
@@ -110,21 +104,22 @@ func calcBalanceForChild(ctx context.Context, db *mongo.Database, childID bson.O
 func handler(ctx context.Context, req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	auth0Sub, ok := middleware.GetAuthSub(req)
 	if !ok {
-		return errorResponse(http.StatusUnauthorized, "UNAUTHORIZED", "認証情報が取得できません"), nil
+		return lib.ErrorResponse(http.StatusUnauthorized, "UNAUTHORIZED", "認証情報が取得できません"), nil
 	}
 
 	db, err := lib.GetDB()
 	if err != nil {
-		return errorResponse(http.StatusInternalServerError, "INTERNAL_ERROR", "DB接続に失敗しました"), nil
+		return lib.ErrorResponse(http.StatusInternalServerError, "INTERNAL_ERROR", "DB接続に失敗しました"), nil
 	}
 
-	user, err := resolveUser(ctx, db, auth0Sub)
+	user, err := lib.ResolveUser(ctx, db, auth0Sub)
 	if err != nil {
-		return errorResponse(http.StatusInternalServerError, "INTERNAL_ERROR", "ユーザー情報の取得に失敗しました"), nil
+		return lib.ErrorResponse(http.StatusInternalServerError, "INTERNAL_ERROR", "ユーザー情報の取得に失敗しました"), nil
 	}
 
 	method := req.HTTPMethod
 	childID, hasID := req.PathParameters["id"]
+	hasID = hasID && childID != ""
 
 	switch {
 	case method == http.MethodGet && !hasID:
@@ -138,7 +133,7 @@ func handler(ctx context.Context, req events.APIGatewayProxyRequest) (events.API
 	case method == http.MethodDelete && hasID:
 		return deleteChild(ctx, db, user, childID)
 	default:
-		return errorResponse(http.StatusMethodNotAllowed, "METHOD_NOT_ALLOWED", "許可されていないメソッドです"), nil
+		return lib.ErrorResponse(http.StatusMethodNotAllowed, "METHOD_NOT_ALLOWED", "許可されていないメソッドです"), nil
 	}
 }
 
@@ -146,34 +141,54 @@ func handler(ctx context.Context, req events.APIGatewayProxyRequest) (events.API
 
 func listChildren(ctx context.Context, db *mongo.Database, user models.User) (events.APIGatewayProxyResponse, error) {
 	col := db.Collection(models.CollectionChildren)
-	cursor, err := col.Find(ctx, bson.M{"user_id": user.ID}, options.Find().SetSort(bson.D{{Key: "created_at", Value: 1}}))
+	// $lookup で records を結合し、残高を集計することで N+1 クエリを解消する
+	pipeline := mongo.Pipeline{
+		{{Key: "$match", Value: bson.M{"user_id": user.ID}}},
+		{{Key: "$lookup", Value: bson.M{
+			"from":         models.CollectionRecords,
+			"localField":   "_id",
+			"foreignField": "child_id",
+			"as":           "records",
+		}}},
+		{{Key: "$addFields", Value: bson.M{
+			"balance": bson.M{"$sum": bson.M{"$map": bson.M{
+				"input": "$records",
+				"as":    "r",
+				"in": bson.M{"$cond": []any{
+					bson.M{"$eq": []any{"$$r.type", "income"}},
+					"$$r.amount",
+					bson.M{"$multiply": []any{"$$r.amount", -1}},
+				}},
+			}}},
+		}}},
+		{{Key: "$sort", Value: bson.D{{Key: "created_at", Value: 1}}}},
+		{{Key: "$project", Value: bson.M{"records": 0}}},
+	}
+
+	cursor, err := col.Aggregate(ctx, pipeline)
 	if err != nil {
-		return errorResponse(http.StatusInternalServerError, "INTERNAL_ERROR", "子ども一覧の取得に失敗しました"), nil
+		return lib.ErrorResponse(http.StatusInternalServerError, "INTERNAL_ERROR", "子ども一覧の取得に失敗しました"), nil
 	}
 	defer cursor.Close(ctx)
 
-	var children []models.Child
-	if err := cursor.All(ctx, &children); err != nil {
-		return errorResponse(http.StatusInternalServerError, "INTERNAL_ERROR", "子ども一覧の取得に失敗しました"), nil
+	var rows []childWithBalance
+	if err := cursor.All(ctx, &rows); err != nil {
+		return lib.ErrorResponse(http.StatusInternalServerError, "INTERNAL_ERROR", "子ども一覧の取得に失敗しました"), nil
 	}
 
-	result := make([]models.ChildResponse, 0, len(children))
-	for _, c := range children {
-		balance, err := calcBalanceForChild(ctx, db, c.ID)
-		if err != nil {
-			return errorResponse(http.StatusInternalServerError, "INTERNAL_ERROR", "残高計算に失敗しました"), nil
-		}
+	result := make([]models.ChildResponse, 0, len(rows))
+	for _, r := range rows {
 		result = append(result, models.ChildResponse{
-			ID:            c.ID,
-			Name:          c.Name,
-			Age:           c.Age,
-			BaseAllowance: c.BaseAllowance,
-			Balance:       balance,
-			CreatedAt:     c.CreatedAt,
-			UpdatedAt:     c.UpdatedAt,
+			ID:            r.ID,
+			Name:          r.Name,
+			Age:           r.Age,
+			BaseAllowance: r.BaseAllowance,
+			Balance:       r.Balance,
+			CreatedAt:     r.CreatedAt,
+			UpdatedAt:     r.UpdatedAt,
 		})
 	}
-	return jsonResponse(http.StatusOK, map[string]any{"data": result}), nil
+	return lib.JSONResponse(http.StatusOK, map[string]any{"data": result}), nil
 }
 
 // ─── POST /api/v1/children ──────────────────────────────────
@@ -181,10 +196,10 @@ func listChildren(ctx context.Context, db *mongo.Database, user models.User) (ev
 func createChild(ctx context.Context, db *mongo.Database, user models.User, body string) (events.APIGatewayProxyResponse, error) {
 	var input childInput
 	if err := json.Unmarshal([]byte(body), &input); err != nil {
-		return errorResponse(http.StatusBadRequest, "VALIDATION_ERROR", "リクエストボディが不正です"), nil
+		return lib.ErrorResponse(http.StatusBadRequest, "VALIDATION_ERROR", "リクエストボディが不正です"), nil
 	}
 	if msg := input.validate(); msg != "" {
-		return errorResponse(http.StatusBadRequest, "VALIDATION_ERROR", msg), nil
+		return lib.ErrorResponse(http.StatusBadRequest, "VALIDATION_ERROR", msg), nil
 	}
 
 	now := time.Now()
@@ -200,7 +215,7 @@ func createChild(ctx context.Context, db *mongo.Database, user models.User, body
 
 	col := db.Collection(models.CollectionChildren)
 	if _, err := col.InsertOne(ctx, child); err != nil {
-		return errorResponse(http.StatusInternalServerError, "INTERNAL_ERROR", "子どもの登録に失敗しました"), nil
+		return lib.ErrorResponse(http.StatusInternalServerError, "INTERNAL_ERROR", "子どもの登録に失敗しました"), nil
 	}
 
 	resp := models.ChildResponse{
@@ -212,23 +227,23 @@ func createChild(ctx context.Context, db *mongo.Database, user models.User, body
 		CreatedAt:     child.CreatedAt,
 		UpdatedAt:     child.UpdatedAt,
 	}
-	return jsonResponse(http.StatusCreated, map[string]any{"data": resp}), nil
+	return lib.JSONResponse(http.StatusCreated, map[string]any{"data": resp}), nil
 }
 
 // ─── GET /api/v1/children/:id ───────────────────────────────
 
 func getChild(ctx context.Context, db *mongo.Database, user models.User, idStr string) (events.APIGatewayProxyResponse, error) {
-	child, found, err := findOwnedChild(ctx, db, user.ID, idStr)
+	child, found, err := lib.FindOwnedChild(ctx, db, user.ID, idStr)
 	if err != nil {
-		return errorResponse(http.StatusInternalServerError, "INTERNAL_ERROR", "子ども情報の取得に失敗しました"), nil
+		return lib.ErrorResponse(http.StatusInternalServerError, "INTERNAL_ERROR", "子ども情報の取得に失敗しました"), nil
 	}
 	if !found {
-		return errorResponse(http.StatusNotFound, "NOT_FOUND", "指定された子どもが見つかりません"), nil
+		return lib.ErrorResponse(http.StatusNotFound, "NOT_FOUND", "指定された子どもが見つかりません"), nil
 	}
 
 	balance, err := calcBalanceForChild(ctx, db, child.ID)
 	if err != nil {
-		return errorResponse(http.StatusInternalServerError, "INTERNAL_ERROR", "残高計算に失敗しました"), nil
+		return lib.ErrorResponse(http.StatusInternalServerError, "INTERNAL_ERROR", "残高計算に失敗しました"), nil
 	}
 
 	resp := models.ChildResponse{
@@ -240,26 +255,26 @@ func getChild(ctx context.Context, db *mongo.Database, user models.User, idStr s
 		CreatedAt:     child.CreatedAt,
 		UpdatedAt:     child.UpdatedAt,
 	}
-	return jsonResponse(http.StatusOK, map[string]any{"data": resp}), nil
+	return lib.JSONResponse(http.StatusOK, map[string]any{"data": resp}), nil
 }
 
 // ─── PUT /api/v1/children/:id ───────────────────────────────
 
 func updateChild(ctx context.Context, db *mongo.Database, user models.User, idStr string, body string) (events.APIGatewayProxyResponse, error) {
-	child, found, err := findOwnedChild(ctx, db, user.ID, idStr)
+	child, found, err := lib.FindOwnedChild(ctx, db, user.ID, idStr)
 	if err != nil {
-		return errorResponse(http.StatusInternalServerError, "INTERNAL_ERROR", "子ども情報の取得に失敗しました"), nil
+		return lib.ErrorResponse(http.StatusInternalServerError, "INTERNAL_ERROR", "子ども情報の取得に失敗しました"), nil
 	}
 	if !found {
-		return errorResponse(http.StatusNotFound, "NOT_FOUND", "指定された子どもが見つかりません"), nil
+		return lib.ErrorResponse(http.StatusNotFound, "NOT_FOUND", "指定された子どもが見つかりません"), nil
 	}
 
 	var input childInput
 	if err := json.Unmarshal([]byte(body), &input); err != nil {
-		return errorResponse(http.StatusBadRequest, "VALIDATION_ERROR", "リクエストボディが不正です"), nil
+		return lib.ErrorResponse(http.StatusBadRequest, "VALIDATION_ERROR", "リクエストボディが不正です"), nil
 	}
 	if msg := input.validate(); msg != "" {
-		return errorResponse(http.StatusBadRequest, "VALIDATION_ERROR", msg), nil
+		return lib.ErrorResponse(http.StatusBadRequest, "VALIDATION_ERROR", msg), nil
 	}
 
 	now := time.Now()
@@ -274,7 +289,7 @@ func updateChild(ctx context.Context, db *mongo.Database, user models.User, idSt
 		}},
 	)
 	if err != nil {
-		return errorResponse(http.StatusInternalServerError, "INTERNAL_ERROR", "子ども情報の更新に失敗しました"), nil
+		return lib.ErrorResponse(http.StatusInternalServerError, "INTERNAL_ERROR", "子ども情報の更新に失敗しました"), nil
 	}
 
 	child.Name = strings.TrimSpace(input.Name)
@@ -284,7 +299,7 @@ func updateChild(ctx context.Context, db *mongo.Database, user models.User, idSt
 
 	balance, err := calcBalanceForChild(ctx, db, child.ID)
 	if err != nil {
-		return errorResponse(http.StatusInternalServerError, "INTERNAL_ERROR", "残高計算に失敗しました"), nil
+		return lib.ErrorResponse(http.StatusInternalServerError, "INTERNAL_ERROR", "残高計算に失敗しました"), nil
 	}
 
 	resp := models.ChildResponse{
@@ -296,54 +311,38 @@ func updateChild(ctx context.Context, db *mongo.Database, user models.User, idSt
 		CreatedAt:     child.CreatedAt,
 		UpdatedAt:     child.UpdatedAt,
 	}
-	return jsonResponse(http.StatusOK, map[string]any{"data": resp}), nil
+	return lib.JSONResponse(http.StatusOK, map[string]any{"data": resp}), nil
 }
 
 // ─── DELETE /api/v1/children/:id ────────────────────────────
 
 func deleteChild(ctx context.Context, db *mongo.Database, user models.User, idStr string) (events.APIGatewayProxyResponse, error) {
-	child, found, err := findOwnedChild(ctx, db, user.ID, idStr)
+	child, found, err := lib.FindOwnedChild(ctx, db, user.ID, idStr)
 	if err != nil {
-		return errorResponse(http.StatusInternalServerError, "INTERNAL_ERROR", "子ども情報の取得に失敗しました"), nil
+		return lib.ErrorResponse(http.StatusInternalServerError, "INTERNAL_ERROR", "子ども情報の取得に失敗しました"), nil
 	}
 	if !found {
-		return errorResponse(http.StatusNotFound, "NOT_FOUND", "指定された子どもが見つかりません"), nil
+		return lib.ErrorResponse(http.StatusNotFound, "NOT_FOUND", "指定された子どもが見つかりません"), nil
 	}
 
-	// 関連する records をカスケード削除
-	recordsCol := db.Collection(models.CollectionRecords)
-	if _, err := recordsCol.DeleteMany(ctx, bson.M{"child_id": child.ID}); err != nil {
-		return errorResponse(http.StatusInternalServerError, "INTERNAL_ERROR", "収支記録の削除に失敗しました"), nil
-	}
-
-	childrenCol := db.Collection(models.CollectionChildren)
-	if _, err := childrenCol.DeleteOne(ctx, bson.M{"_id": child.ID}); err != nil {
-		return errorResponse(http.StatusInternalServerError, "INTERNAL_ERROR", "子どもの削除に失敗しました"), nil
-	}
-
-	return jsonResponse(http.StatusOK, map[string]any{"data": nil}), nil
-}
-
-// ─── 共通ヘルパー ────────────────────────────────────────────
-
-// findOwnedChild は指定IDの子どもを取得し、ログインユーザーの所有であることを確認する。
-// 存在しない or 他ユーザーのリソースの場合は (_, false, nil) を返す（404扱い）。
-func findOwnedChild(ctx context.Context, db *mongo.Database, userID bson.ObjectID, idStr string) (models.Child, bool, error) {
-	oid, err := bson.ObjectIDFromHex(idStr)
+	// records の cascade 削除と child 削除をトランザクションでアトミックに実行する
+	session, err := db.Client().StartSession()
 	if err != nil {
-		return models.Child{}, false, nil // 不正なID形式は404扱い
+		return lib.ErrorResponse(http.StatusInternalServerError, "INTERNAL_ERROR", "子どもの削除に失敗しました"), nil
+	}
+	defer session.EndSession(ctx)
+
+	_, err = session.WithTransaction(ctx, func(sc context.Context) (interface{}, error) {
+		if _, err := db.Collection(models.CollectionRecords).DeleteMany(sc, bson.M{"child_id": child.ID}); err != nil {
+			return nil, err
+		}
+		return db.Collection(models.CollectionChildren).DeleteOne(sc, bson.M{"_id": child.ID})
+	})
+	if err != nil {
+		return lib.ErrorResponse(http.StatusInternalServerError, "INTERNAL_ERROR", "子どもの削除に失敗しました"), nil
 	}
 
-	col := db.Collection(models.CollectionChildren)
-	var child models.Child
-	err = col.FindOne(ctx, bson.M{"_id": oid, "user_id": userID}).Decode(&child)
-	if err == mongo.ErrNoDocuments {
-		return models.Child{}, false, nil
-	}
-	if err != nil {
-		return models.Child{}, false, err
-	}
-	return child, true, nil
+	return lib.JSONResponse(http.StatusOK, map[string]any{"data": nil}), nil
 }
 
 func main() {

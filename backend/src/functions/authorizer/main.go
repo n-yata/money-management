@@ -29,6 +29,10 @@ var cache jwksCache
 
 const cacheTTL = time.Hour
 
+// httpClient はJWKSエンドポイント取得用HTTPクライアント。
+// タイムアウトを設定することで、Auth0が無応答の場合にLambdaがブロックされるのを防ぐ。
+var httpClient = &http.Client{Timeout: 5 * time.Second}
+
 // jwks はAuth0のJWKSエンドポイントのレスポンス形式。
 type jwks struct {
 	Keys []jwk `json:"keys"`
@@ -58,7 +62,7 @@ func getPublicKey(kid string) (*rsa.PublicKey, error) {
 		return nil, fmt.Errorf("AUTH0_DOMAIN is not set")
 	}
 
-	resp, err := http.Get(fmt.Sprintf("https://%s/.well-known/jwks.json", domain))
+	resp, err := httpClient.Get(fmt.Sprintf("https://%s/.well-known/jwks.json", domain))
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch JWKS: %w", err)
 	}
@@ -174,7 +178,16 @@ func handler(_ context.Context, request events.APIGatewayCustomAuthorizerRequest
 		return events.APIGatewayCustomAuthorizerResponse{}, fmt.Errorf("Unauthorized")
 	}
 
-	return generatePolicy(sub, "Allow", "arn:aws:execute-api:*:*:*"), nil
+	// MethodArnからAPI/ステージ部分を抽出し、同一API内の全リソースのみ許可する
+	// 例: arn:aws:execute-api:region:account:apiId/stage/GET/path → apiId/stage/*/*
+	parts := strings.Split(request.MethodArn, "/")
+	var resource string
+	if len(parts) >= 2 {
+		resource = strings.Join(parts[:2], "/") + "/*/*"
+	} else {
+		resource = request.MethodArn
+	}
+	return generatePolicy(sub, "Allow", resource), nil
 }
 
 func main() {
