@@ -1,0 +1,89 @@
+<div class="screen">
+  <div class="header">
+    <button mat-icon-button (click)="cancel()">
+      <mat-icon>arrow_back</mat-icon>
+    </button>
+    <span class="title">収支記録追加</span>
+  </div>
+
+  <form [formGroup]="form" (ngSubmit)="save()" class="form">
+
+    <!-- 収支種別トグル -->
+    <div class="toggle-group">
+      <mat-button-toggle-group formControlName="type" aria-label="収支種別">
+        <mat-button-toggle value="income">収入</mat-button-toggle>
+        <mat-button-toggle value="expense">支出</mat-button-toggle>
+      </mat-button-toggle-group>
+    </div>
+
+    <!-- おこづかいの種類（収入時のみ表示） -->
+    @if (isIncome) {
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>おこづかいの種類（任意）</mat-label>
+        <mat-select formControlName="allowance_type_id">
+          <mat-option [value]="null">選択しない</mat-option>
+          @for (type of allowanceTypes(); track type.id) {
+            <mat-option [value]="type.id">{{ type.name }}（{{ type.amount }}円）</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    }
+
+    <!-- 金額 -->
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>金額（円）</mat-label>
+      <input matInput type="number" formControlName="amount" placeholder="例: 100" />
+      @if (form.get('amount')?.hasError('required') && form.get('amount')?.touched) {
+        <mat-error>金額は必須です</mat-error>
+      }
+      @if (form.get('amount')?.hasError('min') && form.get('amount')?.touched) {
+        <mat-error>金額は1円以上で入力してください</mat-error>
+      }
+    </mat-form-field>
+
+    <!-- 説明 -->
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>説明</mat-label>
+      <input matInput formControlName="description" placeholder="例: お皿洗い" />
+      @if (form.get('description')?.hasError('required') && form.get('description')?.touched) {
+        <mat-error>説明は必須です</mat-error>
+      }
+      @if (form.get('description')?.hasError('maxlength') && form.get('description')?.touched) {
+        <mat-error>説明は50文字以内で入力してください</mat-error>
+      }
+    </mat-form-field>
+
+    <!-- 日付 -->
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>日付</mat-label>
+      <input matInput [matDatepicker]="picker" formControlName="date" />
+      <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+      <mat-datepicker #picker></mat-datepicker>
+      @if (form.get('date')?.hasError('required') && form.get('date')?.touched) {
+        <mat-error>日付は必須です</mat-error>
+      }
+    </mat-form-field>
+
+    <div class="actions">
+      <button mat-button type="button" (click)="cancel()">キャンセル</button>
+      <button
+        mat-flat-button
+        color="primary"
+        type="submit"
+        [disabled]="form.invalid || loading()"
+      >
+        @if (loading()) {
+          <mat-spinner diameter="20"></mat-spinner>
+        } @else {
+          保存
+        }
+      </button>
+    </div>
+  </form>
+
+  @if (loading()) {
+    <div class="loading-overlay">
+      <mat-spinner></mat-spinner>
+    </div>
+  }
+</div>

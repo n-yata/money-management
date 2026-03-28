@@ -50,6 +50,15 @@ export const routes: Routes = [
         m => m.ChildEditComponent
       ),
   },
+  // children/:id/records/new は children/:id より先に登録する（Angularのルーティング優先順位）
+  {
+    path: 'children/:id/records/new',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/children/record-new/record-new.component').then(
+        m => m.RecordNewComponent
+      ),
+  },
   {
     path: '**',
     redirectTo: '',
