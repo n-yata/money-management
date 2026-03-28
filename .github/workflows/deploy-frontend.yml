@@ -1,0 +1,53 @@
+name: Deploy Frontend to GitHub Pages
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - "frontend/**"
+
+# gh-pages ブランチへの push 権限が必要
+permissions:
+  contents: write
+
+jobs:
+  build-and-deploy:
+    name: Build & Deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Run unit tests
+        working-directory: frontend
+        run: npx ng test --watch=false --browsers=ChromeHeadless
+
+      - name: Inject production environment variables
+        working-directory: frontend
+        run: |
+          sed -i "s|__API_BASE_URL__|${{ secrets.API_BASE_URL }}|g" src/environments/environment.prod.ts
+          sed -i "s|__AUTH0_DOMAIN__|${{ secrets.AUTH0_DOMAIN }}|g" src/environments/environment.prod.ts
+          sed -i "s|__AUTH0_CLIENT_ID__|${{ secrets.AUTH0_CLIENT_ID }}|g" src/environments/environment.prod.ts
+          sed -i "s|__AUTH0_AUDIENCE__|${{ secrets.AUTH0_AUDIENCE }}|g" src/environments/environment.prod.ts
+
+      - name: Build
+        working-directory: frontend
+        run: npx ng build --configuration production --base-href /money-management/
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./frontend/dist/frontend/browser
