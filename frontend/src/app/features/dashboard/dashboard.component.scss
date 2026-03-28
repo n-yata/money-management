@@ -1,0 +1,104 @@
+.screen {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding: 0 16px 24px;
+  box-sizing: border-box;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  padding: 8px 0;
+  min-height: 56px;
+  gap: 8px;
+}
+
+.title {
+  font-size: 1.25rem;
+  font-weight: 500;
+  flex: 1;
+}
+
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin-top: 16px;
+  flex: 1;
+}
+
+.child-card {
+  cursor: pointer;
+  border-radius: 16px;
+  transition: box-shadow 0.2s, transform 0.1s;
+  user-select: none;
+
+  &:hover {
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+  }
+
+  &:active {
+    transform: scale(0.97);
+  }
+
+  mat-card-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 20px 16px !important;
+  }
+}
+
+.child-name {
+  font-size: 1.5rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.child-age {
+  font-size: 0.9rem;
+  color: rgba(0, 0, 0, 0.54);
+  text-align: center;
+}
+
+.child-balance {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #3f51b5;
+  text-align: center;
+  margin-top: 8px;
+}
+
+.empty-message {
+  grid-column: 1 / -1;
+  text-align: center;
+  color: rgba(0, 0, 0, 0.54);
+  font-size: 1rem;
+  margin-top: 32px;
+}
+
+.add-button-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 32px;
+}
+
+.add-button {
+  height: 48px;
+  padding: 0 24px;
+  font-size: 1rem;
+  border-radius: 24px;
+}
+
+.loading-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(255, 255, 255, 0.8);
+  z-index: 100;
+}

@@ -1,0 +1,39 @@
+@if (loading()) {
+  <div class="loading-overlay">
+    <mat-spinner></mat-spinner>
+  </div>
+}
+
+<div class="screen">
+  <div class="header">
+    <button mat-icon-button (click)="goToChoreRegister()" aria-label="お手伝い登録画面へ戻る">
+      <mat-icon>arrow_back</mat-icon>
+    </button>
+    <span class="title">おこづかい管理</span>
+    <button mat-button (click)="goToAllowanceTypes()">種類管理</button>
+  </div>
+
+  <div class="card-grid">
+    @for (child of children(); track child.id) {
+      <mat-card class="child-card" (click)="goToChildDetail(child)">
+        <mat-card-content>
+          <div class="child-name">{{ child.name }}</div>
+          <div class="child-age">{{ child.age }}歳</div>
+          <div class="child-balance">¥{{ child.balance | number }}</div>
+        </mat-card-content>
+      </mat-card>
+    }
+    @empty {
+      @if (!loading()) {
+        <p class="empty-message">子どもが登録されていません</p>
+      }
+    }
+  </div>
+
+  <div class="add-button-container">
+    <button mat-raised-button color="primary" class="add-button" (click)="goToChildNew()">
+      <mat-icon>add</mat-icon>
+      子どもを追加
+    </button>
+  </div>
+</div>
