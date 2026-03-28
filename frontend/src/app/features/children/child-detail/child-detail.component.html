@@ -1,0 +1,69 @@
+<div class="screen">
+  <div class="header">
+    <button mat-icon-button (click)="goToDashboard()">
+      <mat-icon>arrow_back</mat-icon>
+    </button>
+    @if (child()) {
+      <span class="title">{{ child()!.name }}（{{ child()!.age }}歳）</span>
+    } @else {
+      <span class="title">子ども詳細</span>
+    }
+    <button mat-icon-button (click)="goToEdit()">
+      <mat-icon>edit</mat-icon>
+    </button>
+  </div>
+
+  @if (child()) {
+    <div class="balance-card">
+      <div class="balance-label">残高（全期間）</div>
+      <div class="balance-amount">¥{{ child()!.balance | number }}</div>
+    </div>
+  }
+
+  <div class="section-header">
+    <mat-label>表示月</mat-label>
+    <select class="month-select" (change)="onMonthChange(monthOptions()[$any($event.target).selectedIndex])">
+      @for (option of monthOptions(); track option.label) {
+        <option [value]="option.label">{{ option.label }}</option>
+      }
+    </select>
+  </div>
+
+  <div class="records-list">
+    @if (records().length === 0 && !loading()) {
+      <p class="empty-message">この月の収支記録はありません</p>
+    }
+    @for (record of records(); track record.id) {
+      <div class="record-item">
+        <div class="record-info">
+          <span class="record-date">{{ record.date }}</span>
+          <span class="record-description">{{ record.description }}</span>
+        </div>
+        <div class="record-right">
+          <span
+            class="record-amount"
+            [ngClass]="record.type === 'income' ? 'income' : 'expense'"
+          >
+            {{ record.type === 'income' ? '+' : '-' }}¥{{ record.amount | number }}
+          </span>
+          <button mat-icon-button color="warn" (click)="deleteRecord(record)">
+            <mat-icon>delete</mat-icon>
+          </button>
+        </div>
+      </div>
+    }
+  </div>
+
+  <div class="add-button-container">
+    <button mat-flat-button color="primary" class="add-button" (click)="goToRecordNew()">
+      <mat-icon>add</mat-icon>
+      収支記録を追加
+    </button>
+  </div>
+
+  @if (loading()) {
+    <div class="loading-overlay">
+      <mat-spinner></mat-spinner>
+    </div>
+  }
+</div>

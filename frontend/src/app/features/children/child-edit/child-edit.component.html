@@ -1,0 +1,72 @@
+<div class="screen">
+  <div class="header">
+    <button mat-icon-button (click)="cancel()">
+      <mat-icon>arrow_back</mat-icon>
+    </button>
+    <span class="title">子ども編集</span>
+  </div>
+
+  <form [formGroup]="form" (ngSubmit)="save()" class="form">
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>名前</mat-label>
+      <input matInput formControlName="name" placeholder="例: たろう" />
+      @if (form.get('name')?.hasError('required') && form.get('name')?.touched) {
+        <mat-error>名前は必須です</mat-error>
+      }
+      @if (form.get('name')?.hasError('maxlength') && form.get('name')?.touched) {
+        <mat-error>名前は20文字以内で入力してください</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>年齢</mat-label>
+      <input matInput type="number" formControlName="age" placeholder="例: 8" />
+      @if (form.get('age')?.hasError('required') && form.get('age')?.touched) {
+        <mat-error>年齢は必須です</mat-error>
+      }
+      @if ((form.get('age')?.hasError('min') || form.get('age')?.hasError('max')) && form.get('age')?.touched) {
+        <mat-error>年齢は1〜18の範囲で入力してください</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>基本おこづかい（円）</mat-label>
+      <input matInput type="number" formControlName="base_allowance" placeholder="例: 1000" />
+      @if (form.get('base_allowance')?.hasError('required') && form.get('base_allowance')?.touched) {
+        <mat-error>基本おこづかいは必須です</mat-error>
+      }
+      @if (form.get('base_allowance')?.hasError('min') && form.get('base_allowance')?.touched) {
+        <mat-error>基本おこづかいは0円以上で入力してください</mat-error>
+      }
+    </mat-form-field>
+
+    <div class="actions">
+      <button mat-button type="button" (click)="cancel()">キャンセル</button>
+      <button
+        mat-flat-button
+        color="primary"
+        type="submit"
+        [disabled]="form.invalid || loading()"
+      >
+        @if (loading()) {
+          <mat-spinner diameter="20"></mat-spinner>
+        } @else {
+          保存
+        }
+      </button>
+    </div>
+  </form>
+
+  <div class="delete-section">
+    <button mat-flat-button color="warn" (click)="confirmDelete()" [disabled]="loading()">
+      <mat-icon>delete</mat-icon>
+      この子どもを削除
+    </button>
+  </div>
+
+  @if (loading()) {
+    <div class="loading-overlay">
+      <mat-spinner></mat-spinner>
+    </div>
+  }
+</div>

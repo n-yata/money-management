@@ -25,6 +25,31 @@ export const routes: Routes = [
         m => m.DashboardComponent
       ),
   },
+  // children/new は children/:id より先に登録する（Angularのルーティング優先順位）
+  {
+    path: 'children/new',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/children/child-new/child-new.component').then(
+        m => m.ChildNewComponent
+      ),
+  },
+  {
+    path: 'children/:id',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/children/child-detail/child-detail.component').then(
+        m => m.ChildDetailComponent
+      ),
+  },
+  {
+    path: 'children/:id/edit',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/children/child-edit/child-edit.component').then(
+        m => m.ChildEditComponent
+      ),
+  },
   {
     path: '**',
     redirectTo: '',
