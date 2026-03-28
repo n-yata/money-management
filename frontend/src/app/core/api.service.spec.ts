@@ -3,13 +3,33 @@ import {
   HttpClientTestingModule,
   HttpTestingController,
 } from '@angular/common/http/testing';
-import { ApiService, Child, AllowanceType, Record, CreateRecordRequest } from './api.service';
+import {
+  ApiService,
+  Child,
+  AllowanceType,
+  Record,
+  CreateChildRequest,
+  UpdateChildRequest,
+  CreateRecordRequest,
+  CreateAllowanceTypeRequest,
+  UpdateAllowanceTypeRequest,
+} from './api.service';
 import { environment } from '../../environments/environment';
+
+const base = environment.apiBaseUrl;
+
+const mockChild: Child = { id: 'c1', name: 'たろう', age: 8, base_allowance: 1000, balance: 1200 };
+const mockChildren: Child[] = [
+  mockChild,
+  { id: 'c2', name: 'はなこ', age: 6, base_allowance: 800, balance: 500 },
+];
+const mockType: AllowanceType = { id: 't1', name: 'お皿洗い', amount: 50 };
+const mockTypes: AllowanceType[] = [mockType, { id: 't2', name: '掃除機かけ', amount: 80 }];
+const mockRecord: Record = { id: 'r1', type: 'income', amount: 50, description: 'お皿洗い', date: '2026-03-27' };
 
 describe('ApiService', () => {
   let service: ApiService;
   let httpMock: HttpTestingController;
-  const base = environment.apiBaseUrl;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
@@ -20,21 +40,15 @@ describe('ApiService', () => {
   });
 
   afterEach(() => {
-    // 未処理のリクエストが残っていないことを保証する
     httpMock.verify();
   });
 
-  // ── getChildren ─────────────────────────────────────────────
+  // ── 子ども一覧 ───────────────────────────────────────────────
 
   describe('getChildren', () => {
     it('GET /children を呼び出して子ども一覧を返す', () => {
-      const mockChildren: Child[] = [
-        { id: 'c1', name: 'たろう', age: 8, base_allowance: 1000, balance: 1200 },
-        { id: 'c2', name: 'はなこ', age: 6, base_allowance: 800, balance: 500 },
-      ];
-
       let result: Child[] | undefined;
-      service.getChildren().subscribe((data) => (result = data));
+      service.getChildren().subscribe(d => (result = d));
 
       const req = httpMock.expectOne(`${base}/children`);
       expect(req.request.method).toBe('GET');
@@ -45,26 +59,82 @@ describe('ApiService', () => {
 
     it('子どもが0件の場合は空配列を返す', () => {
       let result: Child[] | undefined;
-      service.getChildren().subscribe((data) => (result = data));
-
-      const req = httpMock.expectOne(`${base}/children`);
-      req.flush([]);
-
+      service.getChildren().subscribe(d => (result = d));
+      httpMock.expectOne(`${base}/children`).flush([]);
       expect(result).toEqual([]);
     });
   });
 
-  // ── getAllowanceTypes ────────────────────────────────────────
+  // ── 子ども詳細 ───────────────────────────────────────────────
+
+  describe('getChild', () => {
+    it('GET /children/:id を呼び出して子ども詳細を返す', () => {
+      let result: Child | undefined;
+      service.getChild('c1').subscribe(d => (result = d));
+
+      const req = httpMock.expectOne(`${base}/children/c1`);
+      expect(req.request.method).toBe('GET');
+      req.flush(mockChild);
+
+      expect(result).toEqual(mockChild);
+    });
+  });
+
+  // ── 子ども追加 ───────────────────────────────────────────────
+
+  describe('createChild', () => {
+    it('POST /children を正しいボディで呼び出して作成結果を返す', () => {
+      const body: CreateChildRequest = { name: 'たろう', age: 8, base_allowance: 1000 };
+      let result: Child | undefined;
+      service.createChild(body).subscribe(d => (result = d));
+
+      const req = httpMock.expectOne(`${base}/children`);
+      expect(req.request.method).toBe('POST');
+      expect(req.request.body).toEqual(body);
+      req.flush(mockChild);
+
+      expect(result).toEqual(mockChild);
+    });
+  });
+
+  // ── 子ども更新 ───────────────────────────────────────────────
+
+  describe('updateChild', () => {
+    it('PUT /children/:id を正しいボディで呼び出して更新結果を返す', () => {
+      const body: UpdateChildRequest = { name: 'たろう改', age: 9, base_allowance: 1200 };
+      let result: Child | undefined;
+      service.updateChild('c1', body).subscribe(d => (result = d));
+
+      const req = httpMock.expectOne(`${base}/children/c1`);
+      expect(req.request.method).toBe('PUT');
+      expect(req.request.body).toEqual(body);
+      req.flush({ ...mockChild, ...body });
+
+      expect(result?.name).toBe('たろう改');
+    });
+  });
+
+  // ── 子ども削除 ───────────────────────────────────────────────
+
+  describe('deleteChild', () => {
+    it('DELETE /children/:id を呼び出す', () => {
+      let completed = false;
+      service.deleteChild('c1').subscribe(() => (completed = true));
+
+      const req = httpMock.expectOne(`${base}/children/c1`);
+      expect(req.request.method).toBe('DELETE');
+      req.flush(null);
+
+      expect(completed).toBeTrue();
+    });
+  });
+
+  // ── おこづかい種類一覧 ────────────────────────────────────────
 
   describe('getAllowanceTypes', () => {
     it('GET /allowance-types を呼び出して種類一覧を返す', () => {
-      const mockTypes: AllowanceType[] = [
-        { id: 't1', name: 'お皿洗い', amount: 50 },
-        { id: 't2', name: '掃除機かけ', amount: 80 },
-      ];
-
       let result: AllowanceType[] | undefined;
-      service.getAllowanceTypes().subscribe((data) => (result = data));
+      service.getAllowanceTypes().subscribe(d => (result = d));
 
       const req = httpMock.expectOne(`${base}/allowance-types`);
       expect(req.request.method).toBe('GET');
@@ -74,54 +144,142 @@ describe('ApiService', () => {
     });
   });
 
-  // ── createRecord ────────────────────────────────────────────
+  // ── おこづかい種類詳細 ────────────────────────────────────────
+
+  describe('getAllowanceType', () => {
+    it('GET /allowance-types/:id を呼び出して種類詳細を返す', () => {
+      let result: AllowanceType | undefined;
+      service.getAllowanceType('t1').subscribe(d => (result = d));
+
+      const req = httpMock.expectOne(`${base}/allowance-types/t1`);
+      expect(req.request.method).toBe('GET');
+      req.flush(mockType);
+
+      expect(result).toEqual(mockType);
+    });
+  });
+
+  // ── おこづかい種類追加 ────────────────────────────────────────
+
+  describe('createAllowanceType', () => {
+    it('POST /allowance-types を正しいボディで呼び出して作成結果を返す', () => {
+      const body: CreateAllowanceTypeRequest = { name: 'お皿洗い', amount: 50 };
+      let result: AllowanceType | undefined;
+      service.createAllowanceType(body).subscribe(d => (result = d));
+
+      const req = httpMock.expectOne(`${base}/allowance-types`);
+      expect(req.request.method).toBe('POST');
+      expect(req.request.body).toEqual(body);
+      req.flush(mockType);
+
+      expect(result).toEqual(mockType);
+    });
+  });
+
+  // ── おこづかい種類更新 ────────────────────────────────────────
+
+  describe('updateAllowanceType', () => {
+    it('PUT /allowance-types/:id を正しいボディで呼び出して更新結果を返す', () => {
+      const body: UpdateAllowanceTypeRequest = { name: 'お皿洗い改', amount: 60 };
+      let result: AllowanceType | undefined;
+      service.updateAllowanceType('t1', body).subscribe(d => (result = d));
+
+      const req = httpMock.expectOne(`${base}/allowance-types/t1`);
+      expect(req.request.method).toBe('PUT');
+      expect(req.request.body).toEqual(body);
+      req.flush({ ...mockType, ...body });
+
+      expect(result?.amount).toBe(60);
+    });
+  });
+
+  // ── おこづかい種類削除 ────────────────────────────────────────
+
+  describe('deleteAllowanceType', () => {
+    it('DELETE /allowance-types/:id を呼び出す', () => {
+      let completed = false;
+      service.deleteAllowanceType('t1').subscribe(() => (completed = true));
+
+      const req = httpMock.expectOne(`${base}/allowance-types/t1`);
+      expect(req.request.method).toBe('DELETE');
+      req.flush(null);
+
+      expect(completed).toBeTrue();
+    });
+  });
+
+  // ── 収支記録一覧（月フィルタ） ────────────────────────────────
+
+  describe('getRecords', () => {
+    it('GET /children/:id/records?year=&month= を正しいクエリパラメータで呼び出す', () => {
+      let result: Record[] | undefined;
+      service.getRecords('c1', 2026, 3).subscribe(d => (result = d));
+
+      const req = httpMock.expectOne(r =>
+        r.url === `${base}/children/c1/records` &&
+        r.params.get('year') === '2026' &&
+        r.params.get('month') === '3'
+      );
+      expect(req.request.method).toBe('GET');
+      req.flush([mockRecord]);
+
+      expect(result).toEqual([mockRecord]);
+    });
+
+    it('収支記録が0件の場合は空配列を返す', () => {
+      let result: Record[] | undefined;
+      service.getRecords('c1', 2026, 3).subscribe(d => (result = d));
+
+      httpMock.expectOne(r => r.url === `${base}/children/c1/records`).flush([]);
+
+      expect(result).toEqual([]);
+    });
+  });
+
+  // ── 収支記録追加 ──────────────────────────────────────────────
 
   describe('createRecord', () => {
-    const childId = 'c1';
-    const reqBody: CreateRecordRequest = {
-      type: 'income',
-      amount: 50,
-      description: 'お皿洗い',
-      date: '2026-03-27',
-      allowance_type_id: 't1',
-    };
-    const mockRecord: Record = {
-      id: 'r1',
-      type: 'income',
-      amount: 50,
-      description: 'お皿洗い',
-      date: '2026-03-27',
-      allowance_type_id: 't1',
-    };
-
     it('POST /children/:id/records を正しいボディで呼び出して登録結果を返す', () => {
+      const body: CreateRecordRequest = {
+        type: 'income',
+        amount: 50,
+        description: 'お皿洗い',
+        date: '2026-03-27',
+        allowance_type_id: 't1',
+      };
       let result: Record | undefined;
-      service.createRecord(childId, reqBody).subscribe((data) => (result = data));
+      service.createRecord('c1', body).subscribe(d => (result = d));
 
-      const req = httpMock.expectOne(`${base}/children/${childId}/records`);
+      const req = httpMock.expectOne(`${base}/children/c1/records`);
       expect(req.request.method).toBe('POST');
-      expect(req.request.body).toEqual(reqBody);
+      expect(req.request.body).toEqual(body);
       req.flush(mockRecord);
 
       expect(result).toEqual(mockRecord);
     });
 
     it('allowance_type_id なしでもリクエストを送信できる', () => {
-      const bodyWithoutType: CreateRecordRequest = {
-        type: 'income',
-        amount: 100,
-        description: 'テスト',
-        date: '2026-03-27',
-      };
+      const body: CreateRecordRequest = { type: 'expense', amount: 200, description: 'おかし', date: '2026-03-27' };
+      service.createRecord('c1', body).subscribe();
 
-      let result: Record | undefined;
-      service.createRecord(childId, bodyWithoutType).subscribe((data) => (result = data));
+      const req = httpMock.expectOne(`${base}/children/c1/records`);
+      expect(req.request.body).toEqual(body);
+      req.flush({ ...mockRecord, type: 'expense', amount: 200 });
+    });
+  });
 
-      const req = httpMock.expectOne(`${base}/children/${childId}/records`);
-      expect(req.request.body).toEqual(bodyWithoutType);
-      req.flush({ ...mockRecord, allowance_type_id: undefined });
+  // ── 収支記録削除 ──────────────────────────────────────────────
 
-      expect(result).toBeDefined();
+  describe('deleteRecord', () => {
+    it('DELETE /children/:id/records/:recordId を呼び出す', () => {
+      let completed = false;
+      service.deleteRecord('c1', 'r1').subscribe(() => (completed = true));
+
+      const req = httpMock.expectOne(`${base}/children/c1/records/r1`);
+      expect(req.request.method).toBe('DELETE');
+      req.flush(null);
+
+      expect(completed).toBeTrue();
     });
   });
 });
