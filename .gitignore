@@ -1,6 +1,7 @@
 # 環境変数
 backend/.env
 backend/env.json
+backend/samconfig.toml
 
 # AWS SAM ビルド成果物
 backend/.aws-sam/
