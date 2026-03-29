@@ -23,7 +23,7 @@
     @for (allowanceType of allowanceTypes(); track allowanceType.id) {
       <mat-list-item class="list-item">
         <span class="item-name">{{ allowanceType.name }}</span>
-        <span class="item-amount">¥{{ allowanceType.amount }}</span>
+        <span class="item-amount">¥{{ allowanceType.amount | number }}</span>
         <button mat-icon-button (click)="goToEdit(allowanceType)" aria-label="編集">
           <mat-icon>edit</mat-icon>
         </button>

@@ -1,77 +1,77 @@
 <!-- ローディングオーバーレイ: API通信中に全画面スピナーを表示 -->
 @if (loading()) {
-  <div class="loading-overlay">
-    <mat-spinner></mat-spinner>
-  </div>
+<div class="loading-overlay">
+  <mat-spinner></mat-spinner>
+</div>
 }
 
 <!-- ステップ1: 子ども選択 -->
 @if (step() === 'select-child' && !loading()) {
-  <div class="screen">
-    <div class="header">
-      <span class="spacer"></span>
-      <button mat-icon-button (click)="goToDashboard()" aria-label="管理画面">
-        <mat-icon>settings</mat-icon>
-      </button>
-    </div>
-    <h1 class="question">だれがやったの？</h1>
-    <div class="card-grid">
-      @for (child of children(); track child.id) {
-        <mat-card class="child-card" (click)="selectChild(child)">
-          <mat-card-content>
-            <div class="child-name">{{ child.name }}</div>
-          </mat-card-content>
-        </mat-card>
-      }
-      @empty {
-        <p class="empty-message">子どもが登録されていません</p>
-      }
-    </div>
+<div class="screen">
+  <div class="header">
+    <span class="spacer"></span>
+    <button mat-icon-button (click)="goToDashboard()" aria-label="管理画面">
+      <mat-icon>settings</mat-icon>
+    </button>
   </div>
+  <h1 class="question">名前をえらぶ</h1>
+  <div class="card-grid">
+    @for (child of children(); track child.id) {
+    <mat-card class="child-card" (click)="selectChild(child)">
+      <mat-card-content>
+        <div class="child-name">{{ child.name }}</div>
+      </mat-card-content>
+    </mat-card>
+    }
+    @empty {
+    <p class="empty-message">子どもが登録されていません</p>
+    }
+  </div>
+</div>
 }
 
 <!-- ステップ2: お手伝い種類選択 -->
 @if (step() === 'select-type' && !loading()) {
-  <div class="screen">
-    <div class="header">
-      <button mat-icon-button (click)="goBack()" aria-label="戻る">
-        <mat-icon>arrow_back</mat-icon>
-      </button>
-      <span class="selected-child-name">{{ selectedChild()?.name }}</span>
-      <button mat-icon-button (click)="goToDashboard()" aria-label="管理画面">
-        <mat-icon>settings</mat-icon>
-      </button>
-    </div>
-    <h1 class="question">なにをしたの？</h1>
-    <div class="card-grid">
-      @for (type of allowanceTypes(); track type.id) {
-        <mat-card class="type-card" (click)="selectType(type)">
-          <mat-card-content>
-            <div class="type-name">{{ type.name }}</div>
-            <div class="type-amount">¥{{ type.amount | number }}</div>
-          </mat-card-content>
-        </mat-card>
-      }
-      @empty {
-        <p class="empty-message">お手伝いの種類が登録されていません</p>
-      }
-    </div>
+<div class="screen">
+  <div class="header">
+    <button mat-icon-button (click)="goBack()" aria-label="戻る">
+      <mat-icon>arrow_back</mat-icon>
+    </button>
+    <span class="selected-child-name">{{ selectedChild()?.name }}</span>
+    <button mat-icon-button (click)="goToDashboard()" aria-label="管理画面">
+      <mat-icon>settings</mat-icon>
+    </button>
   </div>
+  <h1 class="question">なにをしたの？</h1>
+  <div class="card-grid">
+    @for (type of allowanceTypes(); track type.id) {
+    <mat-card class="type-card" (click)="selectType(type)">
+      <mat-card-content>
+        <div class="type-name">{{ type.name }}</div>
+        <div class="type-amount">¥{{ type.amount | number }}</div>
+      </mat-card-content>
+    </mat-card>
+    }
+    @empty {
+    <p class="empty-message">お手伝いの種類が登録されていません</p>
+    }
+  </div>
+</div>
 }
 
 <!-- 完了表示 -->
 @if (step() === 'done') {
-  <div class="screen done-screen">
-    <div class="done-content">
-      <div class="done-emoji">🎉</div>
-      <h1 class="done-title">登録できたよ！</h1>
-      <p class="done-detail">
-        {{ selectedChild()?.name }} の {{ selectedType()?.name }}
-      </p>
-      <p class="done-amount">¥{{ selectedType()?.amount | number }}</p>
-    </div>
-    <button mat-raised-button color="primary" class="reset-button" (click)="reset()">
-      もう1つ登録する
-    </button>
+<div class="screen done-screen">
+  <div class="done-content">
+    <div class="done-emoji">🎉</div>
+    <h1 class="done-title">登録できたよ！</h1>
+    <p class="done-detail">
+      {{ selectedChild()?.name }} の {{ selectedType()?.name }}
+    </p>
+    <p class="done-amount">¥{{ selectedType()?.amount | number }}</p>
   </div>
+  <button mat-raised-button color="primary" class="reset-button" (click)="reset()">
+    もう1つ登録する
+  </button>
+</div>
 }

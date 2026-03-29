@@ -54,7 +54,13 @@ export class RecordNewComponent implements OnInit, OnDestroy {
   childId = '';
 
   ngOnInit(): void {
-    this.childId = this.route.snapshot.paramMap.get('id') ?? '';
+    // ルートパラメータが取得できない場合はダッシュボードへリダイレクト（M-7対応）
+    const id = this.route.snapshot.paramMap.get('id');
+    if (!id) {
+      this.router.navigate(['/dashboard']);
+      return;
+    }
+    this.childId = id;
 
     this.form = this.fb.group({
       type: ['income', Validators.required],

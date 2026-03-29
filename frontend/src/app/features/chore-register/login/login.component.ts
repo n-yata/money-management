@@ -1,4 +1,5 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { AuthService } from '@auth0/auth0-angular';
 import { MatCardModule } from '@angular/material/card';
@@ -18,18 +19,21 @@ import { MatIconModule } from '@angular/material/icon';
   styleUrl: './login.component.scss',
 })
 export class LoginComponent implements OnInit {
-  constructor(
-    public auth: AuthService,
-    private router: Router
-  ) {}
+  // inject() 関数スタイルに統一（M-5対応）
+  private auth = inject(AuthService);
+  private router = inject(Router);
+  private destroyRef = inject(DestroyRef);
 
   ngOnInit(): void {
     // 認証済みの場合はお手伝い登録画面にリダイレクト
-    this.auth.isAuthenticated$.subscribe(isAuthenticated => {
-      if (isAuthenticated) {
-        this.router.navigate(['/']);
-      }
-    });
+    // takeUntilDestroyed でコンポーネント破棄時にサブスクリプションを自動解除する
+    this.auth.isAuthenticated$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(isAuthenticated => {
+        if (isAuthenticated) {
+          this.router.navigate(['/']);
+        }
+      });
   }
 
   /**

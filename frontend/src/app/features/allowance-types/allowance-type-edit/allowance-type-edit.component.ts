@@ -1,6 +1,7 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { take } from 'rxjs/operators';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
@@ -38,7 +39,13 @@ export class AllowanceTypeEditComponent implements OnInit {
   private allowanceTypeId = '';
 
   ngOnInit(): void {
-    this.allowanceTypeId = this.route.snapshot.paramMap.get('id') ?? '';
+    // ルートパラメータが取得できない場合は種類一覧へリダイレクト（M-7対応）
+    const id = this.route.snapshot.paramMap.get('id');
+    if (!id) {
+      this.router.navigate(['/allowance-types']);
+      return;
+    }
+    this.allowanceTypeId = id;
     this.form = this.fb.group({
       name: ['', [Validators.required, Validators.maxLength(30)]],
       amount: [null, [Validators.required, Validators.min(1)]],
@@ -93,7 +100,8 @@ export class AllowanceTypeEditComponent implements OnInit {
       },
     });
 
-    dialogRef.afterClosed().subscribe((confirmed: boolean) => {
+    // take(1) でダイアログが閉じた後の最初の値のみ取得し、サブスクリプションを自動完了させる
+    dialogRef.afterClosed().pipe(take(1)).subscribe((confirmed: boolean) => {
       if (!confirmed) return;
       this.loading.set(true);
       this.api.deleteAllowanceType(this.allowanceTypeId).subscribe({

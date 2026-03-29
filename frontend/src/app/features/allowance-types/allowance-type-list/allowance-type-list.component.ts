@@ -1,5 +1,6 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
+import { DecimalPipe } from '@angular/common';
 import { MatListModule } from '@angular/material/list';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -11,6 +12,7 @@ import { ApiService, AllowanceType } from '../../../core/api.service';
   selector: 'app-allowance-type-list',
   standalone: true,
   imports: [
+    DecimalPipe,
     MatListModule,
     MatButtonModule,
     MatIconModule,

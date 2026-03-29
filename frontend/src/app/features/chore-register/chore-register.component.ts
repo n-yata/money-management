@@ -1,6 +1,7 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { DecimalPipe } from '@angular/common';
+import { forkJoin } from 'rxjs';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -51,32 +52,20 @@ export class ChoreRegisterComponent implements OnInit {
   selectedType = signal<AllowanceType | null>(null);
 
   ngOnInit(): void {
-    // 子ども一覧とお手伝い種類を並行取得する
-    this.loadChildren();
-    this.loadAllowanceTypes();
-  }
-
-  /** 子ども一覧を取得する */
-  private loadChildren(): void {
+    // forkJoin で子ども一覧とお手伝い種類を並行取得し、loading を一元管理する
     this.loading.set(true);
-    this.api.getChildren().subscribe({
-      next: (children) => {
+    forkJoin({
+      children: this.api.getChildren(),
+      allowanceTypes: this.api.getAllowanceTypes(),
+    }).subscribe({
+      next: ({ children, allowanceTypes }) => {
         this.children.set(children);
+        this.allowanceTypes.set(allowanceTypes);
         this.loading.set(false);
       },
       error: () => {
-        this.snackBar.open('子ども一覧の取得に失敗しました', '閉じる', { duration: 3000 });
+        this.snackBar.open('データの取得に失敗しました', '閉じる', { duration: 3000 });
         this.loading.set(false);
-      },
-    });
-  }
-
-  /** お手伝い種類一覧を取得する */
-  private loadAllowanceTypes(): void {
-    this.api.getAllowanceTypes().subscribe({
-      next: (types) => this.allowanceTypes.set(types),
-      error: () => {
-        this.snackBar.open('お手伝い種類の取得に失敗しました', '閉じる', { duration: 3000 });
       },
     });
   }
@@ -94,7 +83,8 @@ export class ChoreRegisterComponent implements OnInit {
 
     this.loading.set(true);
     // 今日の日付を YYYY-MM-DD 形式で取得
-    const today = new Date().toISOString().split('T')[0];
+    const d = new Date();
+    const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
     this.api.createRecord(child.id, {
       type: 'income',

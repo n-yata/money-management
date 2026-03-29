@@ -1,6 +1,7 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { ReactiveFormsModule, FormBuilder, FormGroup } from '@angular/forms';
+import { take } from 'rxjs/operators';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
@@ -10,6 +11,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatDialog } from '@angular/material/dialog';
 import { ApiService } from '../../../core/api.service';
 import { ConfirmDialogComponent } from '../../../shared/confirm-dialog/confirm-dialog.component';
+import { createChildForm } from '../../../shared/forms/child-form.factory';
 
 @Component({
   selector: 'app-child-edit',
@@ -38,12 +40,15 @@ export class ChildEditComponent implements OnInit {
   private childId = '';
 
   ngOnInit(): void {
-    this.childId = this.route.snapshot.paramMap.get('id') ?? '';
-    this.form = this.fb.group({
-      name: ['', [Validators.required, Validators.maxLength(20)]],
-      age: [null, [Validators.required, Validators.min(1), Validators.max(18)]],
-      base_allowance: [null, [Validators.required, Validators.min(0)]],
-    });
+    // ルートパラメータが取得できない場合はダッシュボードへリダイレクト（M-7対応）
+    const id = this.route.snapshot.paramMap.get('id');
+    if (!id) {
+      this.router.navigate(['/dashboard']);
+      return;
+    }
+    this.childId = id;
+    // 共通ファクトリ関数でフォームを生成（M-4対応）
+    this.form = createChildForm(this.fb);
 
     this.loadChild();
   }
@@ -95,7 +100,8 @@ export class ChildEditComponent implements OnInit {
       },
     });
 
-    dialogRef.afterClosed().subscribe((confirmed: boolean) => {
+    // take(1) でダイアログが閉じた後の最初の値のみ取得し、サブスクリプションを自動完了させる
+    dialogRef.afterClosed().pipe(take(1)).subscribe((confirmed: boolean) => {
       if (!confirmed) return;
       this.loading.set(true);
       this.api.deleteChild(this.childId).subscribe({

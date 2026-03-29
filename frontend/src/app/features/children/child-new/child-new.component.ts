@@ -1,6 +1,6 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { ReactiveFormsModule, FormBuilder, FormGroup } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
@@ -8,6 +8,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { ApiService } from '../../../core/api.service';
+import { createChildForm } from '../../../shared/forms/child-form.factory';
 
 @Component({
   selector: 'app-child-new',
@@ -33,11 +34,8 @@ export class ChildNewComponent implements OnInit {
   loading = signal(false);
 
   ngOnInit(): void {
-    this.form = this.fb.group({
-      name: ['', [Validators.required, Validators.maxLength(20)]],
-      age: [null, [Validators.required, Validators.min(1), Validators.max(18)]],
-      base_allowance: [null, [Validators.required, Validators.min(0)]],
-    });
+    // 共通ファクトリ関数でフォームを生成（M-4対応）
+    this.form = createChildForm(this.fb);
   }
 
   save(): void {
