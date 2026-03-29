@@ -2,10 +2,10 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import { ActivatedRoute, Router } from '@angular/router';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { MatDialog } from '@angular/material/dialog';
+import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { of, throwError } from 'rxjs';
 import { ChildDetailComponent } from './child-detail.component';
-import { ApiService, Child, Record } from '../../../core/api.service';
+import { ApiService, Child, FinancialRecord } from '../../../core/api.service';
 
 describe('ChildDetailComponent', () => {
   let component: ChildDetailComponent;
@@ -23,13 +23,13 @@ describe('ChildDetailComponent', () => {
     balance: 1200,
   };
 
-  const mockRecords: Record[] = [
-    { id: 'r1', type: 'income', amount: 500, description: 'お手伝い', date: '2026-03-20' },
-    { id: 'r2', type: 'expense', amount: 300, description: 'おやつ', date: '2026-03-15' },
+  const mockRecords: FinancialRecord[] = [
+    { id: 'r1', type: 'income', amount: 500, description: 'お手伝い', date: '2026-03-20', created_at: '2026-03-20T10:00:00Z' },
+    { id: 'r2', type: 'expense', amount: 300, description: 'おやつ', date: '2026-03-15', created_at: '2026-03-15T10:00:00Z' },
   ];
 
   beforeEach(async () => {
-    apiService = jasmine.createSpyObj('ApiService', ['getChild', 'getRecords', 'deleteRecord']);
+    apiService = jasmine.createSpyObj<ApiService>('ApiService', ['getChild', 'getRecords', 'deleteRecord']);
     router = jasmine.createSpyObj('Router', ['navigate']);
     snackBar = jasmine.createSpyObj('MatSnackBar', ['open']);
 
@@ -125,7 +125,7 @@ describe('ChildDetailComponent', () => {
     it('確認ダイアログを開き、確認後 deleteRecord が正しい引数で呼ばれること', fakeAsync(() => {
       spyOn(dialog, 'open').and.returnValue({
         afterClosed: () => of(true),
-      } as any);
+      } as unknown as MatDialogRef<unknown>);
       apiService.deleteRecord.and.returnValue(of(void 0));
 
       component.deleteRecord(mockRecords[0]);
@@ -138,7 +138,7 @@ describe('ChildDetailComponent', () => {
     it('ダイアログでキャンセルした場合 deleteRecord が呼ばれないこと', fakeAsync(() => {
       spyOn(dialog, 'open').and.returnValue({
         afterClosed: () => of(false),
-      } as any);
+      } as unknown as MatDialogRef<unknown>);
 
       component.deleteRecord(mockRecords[0]);
       tick();

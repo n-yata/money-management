@@ -3,7 +3,7 @@ import { ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { MatDialog } from '@angular/material/dialog';
+import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { of, throwError } from 'rxjs';
 import { ChildEditComponent } from './child-edit.component';
 import { ApiService, Child } from '../../../core/api.service';
@@ -133,7 +133,7 @@ describe('ChildEditComponent', () => {
       // 実際の MatDialog.open をスパイして確認ダイアログの結果を制御する
       spyOn(dialog, 'open').and.returnValue({
         afterClosed: () => of(true),
-      } as any);
+      } as unknown as MatDialogRef<unknown>);
       apiService.deleteChild.and.returnValue(of(void 0));
 
       component.confirmDelete();
@@ -147,7 +147,7 @@ describe('ChildEditComponent', () => {
     it('ダイアログでキャンセルした場合 deleteChild が呼ばれないこと', fakeAsync(() => {
       spyOn(dialog, 'open').and.returnValue({
         afterClosed: () => of(false),
-      } as any);
+      } as unknown as MatDialogRef<unknown>);
 
       component.confirmDelete();
       tick();
@@ -158,7 +158,7 @@ describe('ChildEditComponent', () => {
     it('削除確認ダイアログに正しいメッセージが渡されること', fakeAsync(() => {
       spyOn(dialog, 'open').and.returnValue({
         afterClosed: () => of(false),
-      } as any);
+      } as unknown as MatDialogRef<unknown>);
 
       component.confirmDelete();
       tick();

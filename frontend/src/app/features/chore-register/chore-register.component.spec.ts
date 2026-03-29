@@ -37,7 +37,7 @@ describe('ChoreRegisterComponent', () => {
     apiServiceSpy.getChildren.and.returnValue(of(mockChildren));
     apiServiceSpy.getAllowanceTypes.and.returnValue(of(mockAllowanceTypes));
     apiServiceSpy.createRecord.and.returnValue(
-      of({ id: 'r1', type: 'income', amount: 50, description: 'お皿洗い', date: '2026-03-27', allowance_type_id: 't1' })
+      of({ id: 'r1', type: 'income', amount: 50, description: 'お皿洗い', date: '2026-03-27', created_at: '2026-03-27T10:00:00Z', allowance_type_id: 't1' })
     );
 
     routerSpy = jasmine.createSpyObj<Router>('Router', ['navigate']);
@@ -109,7 +109,8 @@ describe('ChoreRegisterComponent', () => {
     });
 
     it('種類を選択すると createRecord が正しい引数で呼ばれる', fakeAsync(() => {
-      const today = new Date().toISOString().split('T')[0];
+      const d = new Date();
+      const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
       component.selectType(mockAllowanceTypes[0]);
       tick();
 
@@ -196,6 +197,7 @@ describe('ChoreRegisterComponent', () => {
   // beforeEach でインストールしたスパイがそのまま有効。
 
   describe('初期ロードのエラーハンドリング', () => {
+    // forkJoin による並行取得のため、どちらがエラーになっても同一のエラーメッセージを表示する
     it('getChildren がエラーの場合は SnackBar を表示する', () => {
       apiServiceSpy.getChildren.and.returnValue(throwError(() => new Error('404')));
 
@@ -203,7 +205,7 @@ describe('ChoreRegisterComponent', () => {
       errorFixture.detectChanges();
 
       expect(snackBar.open).toHaveBeenCalledWith(
-        '子ども一覧の取得に失敗しました',
+        'データの取得に失敗しました',
         '閉じる',
         { duration: 3000 }
       );
@@ -218,7 +220,7 @@ describe('ChoreRegisterComponent', () => {
       errorFixture.detectChanges();
 
       expect(snackBar.open).toHaveBeenCalledWith(
-        'お手伝い種類の取得に失敗しました',
+        'データの取得に失敗しました',
         '閉じる',
         { duration: 3000 }
       );

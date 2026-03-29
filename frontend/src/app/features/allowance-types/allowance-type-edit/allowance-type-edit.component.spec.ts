@@ -3,7 +3,7 @@ import { ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { MatDialog } from '@angular/material/dialog';
+import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { of, throwError } from 'rxjs';
 import { AllowanceTypeEditComponent } from './allowance-type-edit.component';
 import { ApiService, AllowanceType } from '../../../core/api.service';
@@ -134,7 +134,7 @@ describe('AllowanceTypeEditComponent', () => {
     it('削除確認ダイアログが開き、確認後 deleteAllowanceType が呼ばれ /allowance-types へ遷移すること', fakeAsync(() => {
       spyOn(dialog, 'open').and.returnValue({
         afterClosed: () => of(true),
-      } as any);
+      } as unknown as MatDialogRef<unknown>);
       apiService.deleteAllowanceType.and.returnValue(of(void 0));
 
       component.confirmDelete();
@@ -148,7 +148,7 @@ describe('AllowanceTypeEditComponent', () => {
     it('ダイアログでキャンセルした場合 deleteAllowanceType が呼ばれないこと', fakeAsync(() => {
       spyOn(dialog, 'open').and.returnValue({
         afterClosed: () => of(false),
-      } as any);
+      } as unknown as MatDialogRef<unknown>);
 
       component.confirmDelete();
       tick();
@@ -159,7 +159,7 @@ describe('AllowanceTypeEditComponent', () => {
     it('削除確認ダイアログに正しいタイトルとメッセージが渡されること', fakeAsync(() => {
       spyOn(dialog, 'open').and.returnValue({
         afterClosed: () => of(false),
-      } as any);
+      } as unknown as MatDialogRef<unknown>);
 
       component.confirmDelete();
       tick();
@@ -173,7 +173,7 @@ describe('AllowanceTypeEditComponent', () => {
     it('削除失敗時に SnackBar が表示されること', fakeAsync(() => {
       spyOn(dialog, 'open').and.returnValue({
         afterClosed: () => of(true),
-      } as any);
+      } as unknown as MatDialogRef<unknown>);
       apiService.deleteAllowanceType.and.returnValue(throwError(() => new Error('API error')));
 
       component.confirmDelete();

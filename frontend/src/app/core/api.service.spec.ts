@@ -7,7 +7,7 @@ import {
   ApiService,
   Child,
   AllowanceType,
-  Record,
+  FinancialRecord,
   CreateChildRequest,
   UpdateChildRequest,
   CreateRecordRequest,
@@ -25,7 +25,7 @@ const mockChildren: Child[] = [
 ];
 const mockType: AllowanceType = { id: 't1', name: 'お皿洗い', amount: 50 };
 const mockTypes: AllowanceType[] = [mockType, { id: 't2', name: '掃除機かけ', amount: 80 }];
-const mockRecord: Record = { id: 'r1', type: 'income', amount: 50, description: 'お皿洗い', date: '2026-03-27' };
+const mockRecord: FinancialRecord = { id: 'r1', type: 'income', amount: 50, description: 'お皿洗い', date: '2026-03-27', created_at: '2026-03-27T10:00:00Z' };
 
 describe('ApiService', () => {
   let service: ApiService;
@@ -52,7 +52,7 @@ describe('ApiService', () => {
 
       const req = httpMock.expectOne(`${base}/children`);
       expect(req.request.method).toBe('GET');
-      req.flush(mockChildren);
+      req.flush({ data: mockChildren });
 
       expect(result).toEqual(mockChildren);
     });
@@ -60,7 +60,7 @@ describe('ApiService', () => {
     it('子どもが0件の場合は空配列を返す', () => {
       let result: Child[] | undefined;
       service.getChildren().subscribe(d => (result = d));
-      httpMock.expectOne(`${base}/children`).flush([]);
+      httpMock.expectOne(`${base}/children`).flush({ data: [] });
       expect(result).toEqual([]);
     });
   });
@@ -74,7 +74,7 @@ describe('ApiService', () => {
 
       const req = httpMock.expectOne(`${base}/children/c1`);
       expect(req.request.method).toBe('GET');
-      req.flush(mockChild);
+      req.flush({ data: mockChild });
 
       expect(result).toEqual(mockChild);
     });
@@ -91,7 +91,7 @@ describe('ApiService', () => {
       const req = httpMock.expectOne(`${base}/children`);
       expect(req.request.method).toBe('POST');
       expect(req.request.body).toEqual(body);
-      req.flush(mockChild);
+      req.flush({ data: mockChild });
 
       expect(result).toEqual(mockChild);
     });
@@ -108,7 +108,7 @@ describe('ApiService', () => {
       const req = httpMock.expectOne(`${base}/children/c1`);
       expect(req.request.method).toBe('PUT');
       expect(req.request.body).toEqual(body);
-      req.flush({ ...mockChild, ...body });
+      req.flush({ data: { ...mockChild, ...body } });
 
       expect(result?.name).toBe('たろう改');
     });
@@ -138,7 +138,7 @@ describe('ApiService', () => {
 
       const req = httpMock.expectOne(`${base}/allowance-types`);
       expect(req.request.method).toBe('GET');
-      req.flush(mockTypes);
+      req.flush({ data: mockTypes });
 
       expect(result).toEqual(mockTypes);
     });
@@ -153,7 +153,7 @@ describe('ApiService', () => {
 
       const req = httpMock.expectOne(`${base}/allowance-types/t1`);
       expect(req.request.method).toBe('GET');
-      req.flush(mockType);
+      req.flush({ data: mockType });
 
       expect(result).toEqual(mockType);
     });
@@ -170,7 +170,7 @@ describe('ApiService', () => {
       const req = httpMock.expectOne(`${base}/allowance-types`);
       expect(req.request.method).toBe('POST');
       expect(req.request.body).toEqual(body);
-      req.flush(mockType);
+      req.flush({ data: mockType });
 
       expect(result).toEqual(mockType);
     });
@@ -187,7 +187,7 @@ describe('ApiService', () => {
       const req = httpMock.expectOne(`${base}/allowance-types/t1`);
       expect(req.request.method).toBe('PUT');
       expect(req.request.body).toEqual(body);
-      req.flush({ ...mockType, ...body });
+      req.flush({ data: { ...mockType, ...body } });
 
       expect(result?.amount).toBe(60);
     });
@@ -212,7 +212,7 @@ describe('ApiService', () => {
 
   describe('getRecords', () => {
     it('GET /children/:id/records?year=&month= を正しいクエリパラメータで呼び出す', () => {
-      let result: Record[] | undefined;
+      let result: FinancialRecord[] | undefined;
       service.getRecords('c1', 2026, 3).subscribe(d => (result = d));
 
       const req = httpMock.expectOne(r =>
@@ -221,16 +221,16 @@ describe('ApiService', () => {
         r.params.get('month') === '3'
       );
       expect(req.request.method).toBe('GET');
-      req.flush([mockRecord]);
+      req.flush({ data: [mockRecord] });
 
       expect(result).toEqual([mockRecord]);
     });
 
     it('収支記録が0件の場合は空配列を返す', () => {
-      let result: Record[] | undefined;
+      let result: FinancialRecord[] | undefined;
       service.getRecords('c1', 2026, 3).subscribe(d => (result = d));
 
-      httpMock.expectOne(r => r.url === `${base}/children/c1/records`).flush([]);
+      httpMock.expectOne(r => r.url === `${base}/children/c1/records`).flush({ data: [] });
 
       expect(result).toEqual([]);
     });
@@ -247,13 +247,13 @@ describe('ApiService', () => {
         date: '2026-03-27',
         allowance_type_id: 't1',
       };
-      let result: Record | undefined;
+      let result: FinancialRecord | undefined;
       service.createRecord('c1', body).subscribe(d => (result = d));
 
       const req = httpMock.expectOne(`${base}/children/c1/records`);
       expect(req.request.method).toBe('POST');
       expect(req.request.body).toEqual(body);
-      req.flush(mockRecord);
+      req.flush({ data: mockRecord });
 
       expect(result).toEqual(mockRecord);
     });
@@ -264,7 +264,7 @@ describe('ApiService', () => {
 
       const req = httpMock.expectOne(`${base}/children/c1/records`);
       expect(req.request.body).toEqual(body);
-      req.flush({ ...mockRecord, type: 'expense', amount: 200 });
+      req.flush({ data: { ...mockRecord, type: 'expense', amount: 200 } });
     });
   });
 

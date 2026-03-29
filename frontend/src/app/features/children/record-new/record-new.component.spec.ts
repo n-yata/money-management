@@ -6,7 +6,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { provideNativeDateAdapter } from '@angular/material/core';
 import { of, throwError, Subject } from 'rxjs';
 import { RecordNewComponent } from './record-new.component';
-import { ApiService, AllowanceType, Record as ApiRecord } from '../../../core/api.service';
+import { ApiService, AllowanceType, FinancialRecord } from '../../../core/api.service';
 
 describe('RecordNewComponent', () => {
   let component: RecordNewComponent;
@@ -22,12 +22,13 @@ describe('RecordNewComponent', () => {
     { id: 'type-2', name: 'ゴミ出し', amount: 100 },
   ];
 
-  const mockRecord: ApiRecord = {
+  const mockRecord: FinancialRecord = {
     id: 'record-1',
     type: 'income',
     amount: 50,
     description: 'お皿洗い',
     date: '2026-03-28',
+    created_at: '2026-03-28T10:00:00Z',
   };
 
   beforeEach(async () => {
@@ -274,7 +275,7 @@ describe('RecordNewComponent', () => {
     }));
 
     it('API通信中は loading が true になること', fakeAsync(() => {
-      const subject = new Subject<ApiRecord>();
+      const subject = new Subject<FinancialRecord>();
       apiService.createRecord.and.returnValue(subject.asObservable());
 
       component.save();
