@@ -1,6 +1,6 @@
 <div class="screen">
   <div class="header">
-    <button mat-icon-button (click)="goToDashboard()">
+    <button mat-icon-button (click)="goToDashboard()" aria-label="ダッシュボードへ戻る">
       <mat-icon>arrow_back</mat-icon>
     </button>
     @if (child()) {
@@ -8,7 +8,7 @@
     } @else {
       <span class="title">子ども詳細</span>
     }
-    <button mat-icon-button (click)="goToEdit()">
+    <button mat-icon-button (click)="goToEdit()" aria-label="子ども情報を編集">
       <mat-icon>edit</mat-icon>
     </button>
   </div>
@@ -22,11 +22,11 @@
 
   <div class="section-header">
     <mat-label>表示月</mat-label>
-    <select class="month-select" (change)="onMonthChange(monthOptions()[$any($event.target).selectedIndex])">
+    <mat-select [value]="selectedMonth()" (selectionChange)="onMonthChange($event.value)">
       @for (option of monthOptions(); track option.label) {
-        <option [value]="option.label">{{ option.label }}</option>
+        <mat-option [value]="option">{{ option.label }}</mat-option>
       }
-    </select>
+    </mat-select>
   </div>
 
   <div class="records-list">
@@ -35,8 +35,15 @@
     }
     @for (record of records(); track record.id) {
       <div class="record-item">
+        @if (paymentMode() && unpaidIncomeIds().has(record.id)) {
+          <mat-checkbox
+            [checked]="selectedRecordIds().has(record.id)"
+            (change)="toggleRecord(record.id)"
+            aria-label="{{ record.description }}を選択">
+          </mat-checkbox>
+        }
         <div class="record-info">
-          <span class="record-date">{{ record.date }}</span>
+          <span class="record-date">{{ record.date | date:'yyyy/MM/dd' }}</span>
           <span class="record-description">{{ record.description }}</span>
         </div>
         <div class="record-right">
@@ -46,20 +53,42 @@
           >
             {{ record.type === 'income' ? '+' : '-' }}¥{{ record.amount | number }}
           </span>
-          <button mat-icon-button color="warn" (click)="deleteRecord(record)">
-            <mat-icon>delete</mat-icon>
-          </button>
+          @if (!paymentMode()) {
+            <button mat-icon-button color="warn" (click)="deleteRecord(record)">
+              <mat-icon>delete</mat-icon>
+            </button>
+          }
         </div>
       </div>
     }
   </div>
 
-  <div class="add-button-container">
-    <button mat-flat-button color="primary" class="add-button" (click)="goToRecordNew()">
-      <mat-icon>add</mat-icon>
-      収支記録を追加
-    </button>
-  </div>
+  @if (paymentMode()) {
+    @if (isOverBalance()) {
+      <p class="over-balance-message">選択金額が残高を超えています</p>
+    }
+    <div class="payment-bar">
+      <button mat-button (click)="togglePaymentMode()">キャンセル</button>
+      <button
+        mat-flat-button
+        color="primary"
+        [disabled]="selectedTotal() === 0 || isOverBalance()"
+        (click)="paySelected()">
+        ¥{{ selectedTotal() | number }} を渡す
+      </button>
+    </div>
+  } @else {
+    <div class="add-button-container">
+      <button mat-stroked-button color="primary" (click)="togglePaymentMode()">
+        <mat-icon>payments</mat-icon>
+        おこづかいを渡す
+      </button>
+      <button mat-flat-button color="primary" class="add-button" (click)="goToRecordNew()">
+        <mat-icon>add</mat-icon>
+        収支記録を追加
+      </button>
+    </div>
+  }
 
   @if (loading()) {
     <div class="loading-overlay">
