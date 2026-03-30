@@ -2,11 +2,11 @@ name: Backend Tests
 
 on:
   push:
-    branches: [master]
+    branches: [main]
     paths:
       - "backend/**"
   pull_request:
-    branches: [master]
+    branches: [main]
     paths:
       - "backend/**"
 
@@ -35,7 +35,7 @@ jobs:
       - name: Run unit tests with coverage
         run: go test -cover -coverprofile=coverage.out ./...
 
-      - name: Check coverage - middleware (target: 90%)
+      - name: "Check coverage - middleware (target: 90%)"
         run: |
           COVERAGE=$(go tool cover -func=coverage.out \
             | grep "^github.com/n-yata/money-management/backend/src/middleware/" \
@@ -47,7 +47,7 @@ jobs:
             exit 1
           fi
 
-      - name: Check coverage - authorizer JWT validation (target: 85%)
+      - name: "Check coverage - authorizer JWT validation (target: 85%)"
         # main() 関数（Lambda エントリーポイント）と防衛的分岐は除外対象のため 85% を閾値とする
         run: |
           COVERAGE=$(go tool cover -func=coverage.out \
@@ -61,7 +61,7 @@ jobs:
             exit 1
           fi
 
-      - name: Check total backend coverage (target: 70%)
+      - name: "Check total backend coverage (target: 70%)"
         run: |
           TOTAL=$(go tool cover -func=coverage.out | tail -1 | awk '{gsub(/%/, "", $3); print $3}')
           echo "Total coverage: ${TOTAL}%"
