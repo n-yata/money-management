@@ -9,6 +9,7 @@ backend/.aws-sam/
 # Go ビルド成果物
 backend/bootstrap
 backend/**bootstrap
+backend/*.exe
 
 # Go テストカバレッジ
 backend/*.out
