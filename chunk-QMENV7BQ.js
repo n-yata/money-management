@@ -1,0 +1,1 @@
+var t={production:!0,apiBaseUrl:"https://xxx.execute-api.com",auth0:{domain:"dev-r25g73f2tlbnmbtt.us.auth0.com",clientId:"oK3CRIKQX4xnVF0ZGOFd4zkLIuUqv091",audience:"https://api.money-management.com"}};export{t as a};
