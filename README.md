@@ -194,6 +194,21 @@ sam deploy \
 
 または `samconfig.toml` に記述します（このファイルも `.gitignore` に追加してください）。
 
+### GitHub Actions Secrets
+
+GitHub リポジトリの **Settings → Secrets and variables → Actions** で設定します。
+フロントエンドの自動デプロイ（GitHub Pages）に必要です。
+
+| Secret 名 | 説明 | 取得元 |
+|---|---|---|
+| `API_BASE_URL` | AWS API Gateway の URL（例: `https://xxxx.execute-api.ap-northeast-1.amazonaws.com/prod/api/v1`） | AWS デプロイ後に判明 |
+| `AUTH0_DOMAIN` | Auth0 テナントドメイン | Auth0 コンソール > Settings |
+| `AUTH0_CLIENT_ID` | Auth0 Application の Client ID | Auth0 コンソール > Applications |
+| `AUTH0_AUDIENCE` | Auth0 API の Identifier | Auth0 コンソール > APIs |
+
+> `API_BASE_URL` は AWS へのデプロイ完了後に設定してください。それ以外の3つは事前に設定可能です。
+> `GITHUB_TOKEN` は GitHub が自動で提供するため設定不要です。
+
 ---
 
 ## ユーザー登録について
