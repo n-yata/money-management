@@ -8,6 +8,56 @@ import (
 	"github.com/n-yata/money-management/backend/src/middleware"
 )
 
+func TestGetAuthSubWithLocalFallback(t *testing.T) {
+	emptyReq := events.APIGatewayProxyRequest{
+		RequestContext: events.APIGatewayProxyRequestContext{
+			Authorizer: map[string]interface{}{},
+		},
+	}
+
+	t.Run("ENVIRONMENT=local のとき LOCAL_AUTH0_SUB にフォールバックする", func(t *testing.T) {
+		t.Setenv("ENVIRONMENT", "local")
+		t.Setenv("LOCAL_AUTH0_SUB", "auth0|localuser")
+
+		gotSub, gotOK := middleware.GetAuthSub(emptyReq)
+
+		if !gotOK {
+			t.Error("GetAuthSub() ok = false, want true")
+		}
+		if gotSub != "auth0|localuser" {
+			t.Errorf("GetAuthSub() sub = %q, want %q", gotSub, "auth0|localuser")
+		}
+	})
+
+	t.Run("ENVIRONMENT=production のとき LOCAL_AUTH0_SUB があっても無視する", func(t *testing.T) {
+		t.Setenv("ENVIRONMENT", "production")
+		t.Setenv("LOCAL_AUTH0_SUB", "auth0|localuser")
+
+		gotSub, gotOK := middleware.GetAuthSub(emptyReq)
+
+		if gotOK {
+			t.Error("GetAuthSub() ok = true, want false（本番でのバイパス禁止）")
+		}
+		if gotSub != "" {
+			t.Errorf("GetAuthSub() sub = %q, want %q", gotSub, "")
+		}
+	})
+
+	t.Run("ENVIRONMENT未設定（デフォルト）のとき LOCAL_AUTH0_SUB を無視する", func(t *testing.T) {
+		t.Setenv("ENVIRONMENT", "")
+		t.Setenv("LOCAL_AUTH0_SUB", "auth0|localuser")
+
+		gotSub, gotOK := middleware.GetAuthSub(emptyReq)
+
+		if gotOK {
+			t.Error("GetAuthSub() ok = true, want false（デフォルトはproduction扱い）")
+		}
+		if gotSub != "" {
+			t.Errorf("GetAuthSub() sub = %q, want %q", gotSub, "")
+		}
+	})
+}
+
 func TestGetAuthSub(t *testing.T) {
 	tests := []struct {
 		name       string

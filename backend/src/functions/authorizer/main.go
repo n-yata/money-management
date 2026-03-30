@@ -153,7 +153,7 @@ func handler(_ context.Context, request events.APIGatewayCustomAuthorizerRequest
 	token, err := gojwt.Parse(tokenStr,
 		func(t *gojwt.Token) (interface{}, error) {
 			if _, ok := t.Method.(*gojwt.SigningMethodRSA); !ok {
-				return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
+				return nil, fmt.Errorf("unexpected signing method")
 			}
 			kid, ok := t.Header["kid"].(string)
 			if !ok {

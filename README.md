@@ -66,30 +66,45 @@ money-management/
 - Node.js 18+
 - Go 1.21+
 - AWS SAM CLI
+- Docker（`sam local start-api` の実行に必要。Docker Desktop 推奨）
 - Auth0 テナント（事前作成が必要）
 - MongoDB Atlas クラスター（事前作成が必要）
 
 ### フロントエンド
 
+**macOS / Linux:**
 ```bash
 cd frontend
 npm install
+ng serve
+```
+
+**Windows (PowerShell):**
+```powershell
+cd frontend
+npm install
+ng serve
 ```
 
 `src/environments/environment.ts` に Auth0 の情報を設定します（後述）。
 
-```bash
-ng serve
-```
-
 ### バックエンド
 
+**macOS / Linux:**
 ```bash
 cd backend
 cp .env.example .env
 # .env を編集して秘密情報を設定（後述）
-go build ./...
 sam build && sam local start-api
+```
+
+**Windows (PowerShell):**
+```powershell
+cd backend
+Copy-Item .env.example .env
+# .env を編集して秘密情報を設定（後述）
+sam build
+sam local start-api
 ```
 
 ---
@@ -141,6 +156,10 @@ MONGODB_URI=mongodb+srv://<username>:<password>@<cluster>.mongodb.net/money-mana
 # Auth0
 AUTH0_DOMAIN=your-tenant.auth0.com
 AUTH0_AUDIENCE=https://api.money-management.example.com
+
+# ローカル開発専用（本番では設定しないこと）
+ENVIRONMENT=local
+LOCAL_AUTH0_SUB=auth0|your-user-id   # Lambda Authorizer をスキップして使用するユーザーID
 ```
 
 | 変数名 | 説明 | 取得元 |
@@ -148,6 +167,8 @@ AUTH0_AUDIENCE=https://api.money-management.example.com
 | `MONGODB_URI` | MongoDB Atlas の接続URI | Atlas コンソール > Connect > Drivers |
 | `AUTH0_DOMAIN` | Auth0 テナントドメイン | Auth0 コンソール > Settings |
 | `AUTH0_AUDIENCE` | Auth0 API の Identifier | Auth0 コンソール > APIs |
+| `ENVIRONMENT` | 実行環境（`local` / `production`）。`local` のみ `LOCAL_AUTH0_SUB` フォールバックが有効 | ローカルは `local` 固定 |
+| `LOCAL_AUTH0_SUB` | `sam local` で Authorizer をスキップする際の代替ユーザーID。`ENVIRONMENT=local` のときのみ有効 | Auth0 コンソール > Users |
 
 ### AWS SAM デプロイ時のパラメータ
 
@@ -158,8 +179,18 @@ sam deploy \
   --parameter-overrides \
     MongoDBUri="mongodb+srv://..." \
     Auth0Domain="your-tenant.auth0.com" \
-    Auth0Audience="https://api.money-management.example.com"
+    Auth0Audience="https://api.money-management.example.com" \
+    AllowOrigin="'https://<your-github-pages-url>'" \
+    Environment="production"
 ```
+
+| パラメータ | 説明 |
+|---|---|
+| `MongoDBUri` | MongoDB Atlas の接続URI |
+| `Auth0Domain` | Auth0 テナントドメイン |
+| `Auth0Audience` | Auth0 API の Identifier |
+| `AllowOrigin` | CORS 許可オリジン。本番は GitHub Pages の URL をシングルクォートで囲む（例: `"'https://your-account.github.io'"` ） |
+| `Environment` | 実行環境。本番は必ず `production` を指定（`local` では認証バイパスが有効になるため） |
 
 または `samconfig.toml` に記述します（このファイルも `.gitignore` に追加してください）。
 
@@ -198,7 +229,17 @@ Auth0 コンソールで親ユーザーを手動登録してください。
 
 ## テスト
 
+**macOS / Linux:**
 ```bash
+# バックエンド
+cd backend && go test ./...
+
+# フロントエンド
+cd frontend && ng test
+```
+
+**Windows (PowerShell):**
+```powershell
 # バックエンド
 cd backend
 go test ./...

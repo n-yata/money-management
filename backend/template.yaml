@@ -15,6 +15,8 @@ Globals:
         AUTH0_DOMAIN: !Ref Auth0Domain
         AUTH0_AUDIENCE: !Ref Auth0Audience
         LOCAL_AUTH0_SUB: !Ref LocalAuth0Sub
+        CORS_ALLOW_ORIGIN: !Ref AllowOrigin
+        ENVIRONMENT: !Ref Environment
 
 Parameters:
   MongoDBUri:
@@ -31,6 +33,13 @@ Parameters:
     Type: String
     Description: "ローカル開発専用: Lambda Authorizer をスキップする際の代替 sub ID。本番では空文字を設定すること。"
     Default: ""
+  Environment:
+    Type: String
+    Description: "デプロイ環境。本番は 'production' を指定すること（LOCAL_AUTH0_SUB によるバイパスを禁止）。"
+    Default: "production"
+    AllowedValues:
+      - production
+      - local
   AllowOrigin:
     Type: String
     Description: "CORS AllowOrigin (e.g. https://your-account.github.io). Use '*' only for development."
@@ -56,12 +65,10 @@ Resources:
             FunctionArn: !GetAtt AuthorizerFunction.Arn
             Identity:
               # Authorization ヘッダーのみをキャッシュキーとする REQUEST タイプ Authorizer。
-              # 同じトークンを持つリクエストは ResultTtlInSeconds 秒間キャッシュされる。
-              # 個人・家族向けアプリとしてトークン無効化から最大 5 分の遅延を許容している。
-              # セキュリティ要件が厳しい場合は ResultTtlInSeconds: 0 に変更すること。
+              # ResultTtlInSeconds: 0 で毎回 JWT 検証を行う（ログアウト後の即時無効化）。
               Headers:
                 - Authorization
-            ResultTtlInSeconds: 300
+            ResultTtlInSeconds: 0
 
   # ─────────────────────────────────────────
   # Lambda Authorizer

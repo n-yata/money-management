@@ -9,12 +9,15 @@ import (
 
 // GetAuthSub はAPI GatewayのリクエストコンテキストからAuth0のsub IDを取得する。
 // Lambda Authorizerが付与したコンテキストから取得するため、認証済みリクエストのみで有効。
-// ローカル開発時（--disable-authorizer使用時）は LOCAL_AUTH0_SUB 環境変数にフォールバックする。
+// ENVIRONMENT=local のときのみ LOCAL_AUTH0_SUB へのフォールバックを許可する（明示的なオプトイン）。
+// それ以外のすべての値（"production" や未設定）ではフォールバックを禁止する。
 func GetAuthSub(request events.APIGatewayProxyRequest) (string, bool) {
 	sub, ok := request.RequestContext.Authorizer["sub"].(string)
 	if !ok || sub == "" {
-		if localSub := os.Getenv("LOCAL_AUTH0_SUB"); localSub != "" {
-			return localSub, true
+		if os.Getenv("ENVIRONMENT") == "local" {
+			if localSub := os.Getenv("LOCAL_AUTH0_SUB"); localSub != "" {
+				return localSub, true
+			}
 		}
 		return "", false
 	}

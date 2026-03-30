@@ -4,9 +4,22 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"os"
+	"strings"
 
 	"github.com/aws/aws-lambda-go/events"
 )
+
+// allowOrigin は CORS_ALLOW_ORIGIN 環境変数からオリジンを取得する。
+// SAM テンプレートは API Gateway 用にシングルクォートで値を渡す（例: "'*'"）ため、
+// 環境変数経由で受け取った場合はクォートを除去する。
+func allowOrigin() string {
+	origin := os.Getenv("CORS_ALLOW_ORIGIN")
+	if origin == "" {
+		return "*"
+	}
+	return strings.Trim(origin, "'")
+}
 
 // JSONResponse は JSON レスポンスを生成する。
 // json.Marshal に失敗した場合は 500 エラーレスポンスを返す。
@@ -21,7 +34,7 @@ func JSONResponse(status int, body any) events.APIGatewayProxyResponse {
 		StatusCode: status,
 		Headers: map[string]string{
 			"Content-Type":                "application/json",
-			"Access-Control-Allow-Origin": "*",
+			"Access-Control-Allow-Origin": allowOrigin(),
 		},
 		Body: string(b),
 	}

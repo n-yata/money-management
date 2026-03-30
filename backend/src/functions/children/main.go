@@ -325,20 +325,13 @@ func deleteChild(ctx context.Context, db *mongo.Database, user models.User, idSt
 		return lib.ErrorResponse(http.StatusNotFound, "NOT_FOUND", "指定された子どもが見つかりません"), nil
 	}
 
-	// records の cascade 削除と child 削除をトランザクションでアトミックに実行する
-	session, err := db.Client().StartSession()
-	if err != nil {
+	// MongoDB Atlas M0（無料枠）はレプリカセット非対応のためマルチドキュメントトランザクションを使用できない。
+	// records → child の順で逐次削除する。records 削除後に child 削除が失敗した場合は
+	// records なし child が残るが、次回削除リトライで解消できる（逆順より安全）。
+	if _, err := db.Collection(models.CollectionRecords).DeleteMany(ctx, bson.M{"child_id": child.ID}); err != nil {
 		return lib.ErrorResponse(http.StatusInternalServerError, "INTERNAL_ERROR", "子どもの削除に失敗しました"), nil
 	}
-	defer session.EndSession(ctx)
-
-	_, err = session.WithTransaction(ctx, func(sc context.Context) (interface{}, error) {
-		if _, err := db.Collection(models.CollectionRecords).DeleteMany(sc, bson.M{"child_id": child.ID}); err != nil {
-			return nil, err
-		}
-		return db.Collection(models.CollectionChildren).DeleteOne(sc, bson.M{"_id": child.ID})
-	})
-	if err != nil {
+	if _, err := db.Collection(models.CollectionChildren).DeleteOne(ctx, bson.M{"_id": child.ID}); err != nil {
 		return lib.ErrorResponse(http.StatusInternalServerError, "INTERNAL_ERROR", "子どもの削除に失敗しました"), nil
 	}
 

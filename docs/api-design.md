@@ -558,5 +558,6 @@ Authorization: Bearer <Auth0アクセストークン>
 - `allowance_type_id` を指定して収支記録を作成する際、その種類が自分のユーザーに紐づくか検証する
 
 ### Lambda Authorizer キャッシュ
-- Authorizerの結果はAPI Gatewayでキャッシュする（TTL: 300秒）
+- Authorizerの結果はキャッシュしない（TTL: 0秒）
+- ログアウト後の即時無効化を保証するため、毎リクエストでJWT検証を行う
 - キャッシュキーはAuthorizationヘッダーのトークン値
