@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - "frontend/**"
+  workflow_dispatch:
 
 # gh-pages ブランチへの push 権限が必要
 permissions:
