@@ -63,4 +63,17 @@ export class DashboardComponent implements OnInit {
   goToChildNew(): void {
     this.router.navigate(['/children/new']);
   }
+
+  // イニシャルアイコンの背景色（子どもごとに循環）
+  private readonly avatarColors = [
+    '#1565c0', '#2e7d32', '#6a1b9a', '#e65100', '#00695c',
+  ];
+
+  getAvatarColor(index: number): string {
+    return this.avatarColors[index % this.avatarColors.length];
+  }
+
+  getInitial(name: string): string {
+    return name.charAt(0);
+  }
 }

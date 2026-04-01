@@ -1,19 +1,10 @@
 // お手伝い登録画面: 子ども向けの大きなUIでタップ操作しやすいデザイン
 
-.screen {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  padding: 0 16px 24px;
-  box-sizing: border-box;
-}
-
-// ── ヘッダー ──────────────────────────────────────
 .header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 0;
+  padding: var(--spacing-sm) 0;
   min-height: 56px;
 }
 
@@ -21,10 +12,9 @@
   flex: 1;
 }
 
-// ステップ2で表示する選択中の子どもの名前
 .selected-child-name {
   font-size: 1.25rem;
-  font-weight: 500;
+  font-weight: 700;
   flex: 1;
   text-align: center;
 }
@@ -34,7 +24,7 @@
   text-align: center;
   font-size: 2rem;
   font-weight: 700;
-  margin: 24px 0 32px;
+  margin: var(--spacing-lg) 0 var(--spacing-xl);
   line-height: 1.3;
 }
 
@@ -42,50 +32,16 @@
 .card-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 16px;
+  gap: var(--spacing-md);
   flex: 1;
 }
 
-// 子ども選択カード
+// 子ども選択カード（パステル背景＋ボーダー）
 .child-card {
   cursor: pointer;
-  border-radius: 16px;
-  transition: box-shadow 0.2s, transform 0.1s;
-  user-select: none;
-
-  // タップしやすい最小高さを確保
-  min-height: 120px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  &:hover {
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
-  }
-
-  &:active {
-    transform: scale(0.97);
-  }
-
-  mat-card-content {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 16px !important;
-    width: 100%;
-  }
-}
-
-.child-name {
-  font-size: 1.75rem;
-  font-weight: 700;
-  text-align: center;
-}
-
-// お手伝い種類選択カード
-.type-card {
-  cursor: pointer;
-  border-radius: 16px;
+  border-radius: var(--radius-lg) !important;
+  border: 2px solid transparent;
+  box-shadow: var(--shadow-card) !important;
   transition: box-shadow 0.2s, transform 0.1s;
   user-select: none;
   min-height: 120px;
@@ -94,7 +50,7 @@
   justify-content: center;
 
   &:hover {
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+    box-shadow: var(--shadow-card-hover) !important;
   }
 
   &:active {
@@ -106,31 +62,81 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 8px;
-    padding: 16px !important;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-md) !important;
     width: 100%;
   }
+}
+
+.child-initial {
+  font-size: 2.5rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.child-name {
+  font-size: 1.5rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+// お手伝い種類選択カード
+.type-card {
+  cursor: pointer;
+  border-radius: var(--radius-lg) !important;
+  box-shadow: var(--shadow-card) !important;
+  transition: box-shadow 0.2s, transform 0.1s;
+  user-select: none;
+  min-height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+
+  &:hover {
+    box-shadow: var(--shadow-card-hover) !important;
+  }
+
+  &:active {
+    transform: scale(0.97);
+  }
+
+  mat-card-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-lg) var(--spacing-md) var(--spacing-md) !important;
+    width: 100%;
+  }
+}
+
+.amount-badge {
+  position: absolute;
+  top: 0;
+  right: 0;
+  color: #ffffff;
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 0 var(--radius-lg) 0 var(--radius-md);
 }
 
 .type-name {
   font-size: 1.25rem;
   font-weight: 600;
   text-align: center;
+  margin-top: 8px;
 }
 
-.type-amount {
-  font-size: 1.1rem;
-  color: rgba(0, 0, 0, 0.6);
-  text-align: center;
-}
-
-// 子ども/種類が未登録の場合のメッセージ
 .empty-message {
   grid-column: 1 / -1;
   text-align: center;
-  color: rgba(0, 0, 0, 0.54);
+  color: var(--color-text-sub);
   font-size: 1rem;
-  margin-top: 32px;
+  margin-top: var(--spacing-xl);
 }
 
 // ── 完了画面 ──────────────────────────────────────
@@ -143,34 +149,41 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
+  gap: var(--spacing-md);
   margin-bottom: 48px;
 }
 
 .done-emoji {
-  font-size: 4rem;
+  font-size: 5rem;
   line-height: 1;
+  animation: pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes pop {
+  0% { transform: scale(0.5); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
 }
 
 .done-title {
-  font-size: 2rem;
+  font-size: 2.25rem;
   font-weight: 700;
   margin: 0;
   text-align: center;
+  color: var(--color-primary);
 }
 
 .done-detail {
   font-size: 1.25rem;
   margin: 0;
   text-align: center;
-  color: rgba(0, 0, 0, 0.7);
+  color: var(--color-text-sub);
 }
 
 .done-amount {
-  font-size: 2rem;
+  font-size: 2.25rem;
   font-weight: 700;
   margin: 0;
-  color: #3f51b5; // Angular Material indigo
+  color: var(--color-income);
   text-align: center;
 }
 
@@ -179,16 +192,5 @@
   max-width: 320px;
   height: 56px;
   font-size: 1.1rem;
-  border-radius: 28px;
-}
-
-// ── ローディングオーバーレイ ──────────────────────
-.loading-overlay {
-  position: fixed;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: rgba(255, 255, 255, 0.8);
-  z-index: 100;
+  border-radius: var(--radius-xl) !important;
 }

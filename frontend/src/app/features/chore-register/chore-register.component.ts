@@ -122,4 +122,20 @@ export class ChoreRegisterComponent implements OnInit {
   goToDashboard(): void {
     this.router.navigate(['/dashboard']);
   }
+
+  // 子どもカードのパステル背景色（循環）
+  private readonly cardBgColors = [
+    '#e3f2fd', '#e8f5e9', '#f3e5f5', '#fff3e0', '#e0f7fa',
+  ];
+  private readonly cardBorderColors = [
+    '#1565c0', '#2e7d32', '#6a1b9a', '#e65100', '#00695c',
+  ];
+
+  getCardBg(index: number): string {
+    return this.cardBgColors[index % this.cardBgColors.length];
+  }
+
+  getCardBorder(index: number): string {
+    return this.cardBorderColors[index % this.cardBorderColors.length];
+  }
 }

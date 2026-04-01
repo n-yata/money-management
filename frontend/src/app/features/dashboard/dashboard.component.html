@@ -5,21 +5,31 @@
 }
 
 <div class="screen">
-  <div class="header">
-    <button mat-icon-button (click)="goToChoreRegister()" aria-label="お手伝い登録画面へ戻る">
+  <div class="page-header">
+    <button mat-icon-button (click)="goToChoreRegister()" aria-label="お手伝い登録画面へ戻る" class="back-btn">
       <mat-icon>arrow_back</mat-icon>
     </button>
-    <span class="title">おこづかい管理</span>
-    <button mat-button (click)="goToAllowanceTypes()">種類管理</button>
+    <div class="header-title-group">
+      <span class="header-title">おこづかい管理</span>
+    </div>
+    <button mat-button (click)="goToAllowanceTypes()" class="type-btn">種類管理</button>
   </div>
 
   <div class="card-grid">
-    @for (child of children(); track child.id) {
-      <mat-card class="child-card" (click)="goToChildDetail(child)">
+    @for (child of children(); track child.id; let i = $index) {
+      <mat-card class="child-card" (click)="goToChildDetail(child)"
+        [style.border-left-color]="getAvatarColor(i)">
         <mat-card-content>
-          <div class="child-name">{{ child.name }}</div>
-          <div class="child-age">{{ child.age }}歳</div>
-          <div class="child-balance">¥{{ child.balance | number }}</div>
+          <div class="avatar" [style.background-color]="getAvatarColor(i)">
+            {{ getInitial(child.name) }}
+          </div>
+          <div class="child-info">
+            <div class="child-name">{{ child.name }}</div>
+            <div class="child-age">{{ child.age }}歳</div>
+          </div>
+          <div class="child-balance" [class.negative]="child.balance < 0">
+            ¥{{ child.balance | number }}
+          </div>
         </mat-card-content>
       </mat-card>
     }
@@ -30,10 +40,7 @@
     }
   </div>
 
-  <div class="add-button-container">
-    <button mat-raised-button color="primary" class="add-button" (click)="goToChildNew()">
-      <mat-icon>add</mat-icon>
-      子どもを追加
-    </button>
-  </div>
+  <button mat-fab color="primary" class="fab" (click)="goToChildNew()" aria-label="子どもを追加">
+    <mat-icon>add</mat-icon>
+  </button>
 </div>

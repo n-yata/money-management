@@ -14,7 +14,7 @@
   </div>
 
   @if (child()) {
-    <div class="balance-card">
+    <div class="balance-card" [class.negative]="child()!.balance < 0">
       <div class="balance-label">残高（全期間）</div>
       <div class="balance-amount">¥{{ child()!.balance | number }}</div>
     </div>
@@ -42,9 +42,12 @@
             aria-label="{{ record.description }}を選択">
           </mat-checkbox>
         }
+        <div class="record-type-icon" [class.income]="record.type === 'income'" [class.expense]="record.type === 'expense'">
+          <mat-icon>{{ record.type === 'income' ? 'arrow_upward' : 'arrow_downward' }}</mat-icon>
+        </div>
         <div class="record-info">
-          <span class="record-date">{{ record.date | date:'yyyy/MM/dd' }}</span>
           <span class="record-description">{{ record.description }}</span>
+          <span class="record-date">{{ record.date | date:'yyyy/MM/dd' }}</span>
         </div>
         <div class="record-right">
           <span

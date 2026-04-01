@@ -19,15 +19,15 @@
     <p class="empty-message">種類が登録されていません</p>
   }
 
-  <mat-list class="list">
+  <div class="type-grid">
     @for (allowanceType of allowanceTypes(); track allowanceType.id) {
-      <mat-list-item class="list-item">
-        <span class="item-name">{{ allowanceType.name }}</span>
-        <span class="item-amount">¥{{ allowanceType.amount | number }}</span>
-        <button mat-icon-button (click)="goToEdit(allowanceType)" aria-label="編集">
-          <mat-icon>edit</mat-icon>
-        </button>
-      </mat-list-item>
+      <mat-card class="type-card" (click)="goToEdit(allowanceType)">
+        <mat-card-content>
+          <div class="amount-badge">¥{{ allowanceType.amount | number }}</div>
+          <div class="type-name">{{ allowanceType.name }}</div>
+          <mat-icon class="edit-icon">chevron_right</mat-icon>
+        </mat-card-content>
+      </mat-card>
     }
-  </mat-list>
+  </div>
 </div>

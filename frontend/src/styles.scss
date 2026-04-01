@@ -1,4 +1,135 @@
-/* You can add global styles to this file, and also import other style files */
+@use '@angular/material' as mat;
 
-html, body { height: 100%; }
-body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+// ── カスタムテーマ定義 ─────────────────────────────────
+$primary-palette: mat.m2-define-palette(mat.$m2-blue-palette, 800, 600, 900);
+$accent-palette:  mat.m2-define-palette(mat.$m2-amber-palette, 600, 400, 800);
+$warn-palette:    mat.m2-define-palette(mat.$m2-red-palette, 700);
+
+$app-theme: mat.m2-define-light-theme((
+  color: (
+    primary: $primary-palette,
+    accent:  $accent-palette,
+    warn:    $warn-palette,
+  ),
+  typography: mat.m2-define-typography-config(
+    $font-family: '"Noto Sans JP", sans-serif',
+  ),
+  density: 0,
+));
+
+@include mat.all-component-themes($app-theme);
+
+// ── デザイントークン ──────────────────────────────────
+:root {
+  --color-primary:     #1565c0;
+  --color-primary-light: #e3f2fd;
+  --color-accent:      #f9a825;
+  --color-income:      #2e7d32;
+  --color-expense:     #c62828;
+  --color-bg:          #f3f4f9;
+  --color-surface:     #ffffff;
+  --color-text:        rgba(0, 0, 0, 0.87);
+  --color-text-sub:    rgba(0, 0, 0, 0.54);
+  --color-divider:     rgba(0, 0, 0, 0.12);
+
+  --radius-sm:  8px;
+  --radius-md:  12px;
+  --radius-lg:  16px;
+  --radius-xl:  24px;
+
+  --shadow-card:       0 2px 8px rgba(0, 0, 0, 0.10);
+  --shadow-card-hover: 0 6px 16px rgba(0, 0, 0, 0.18);
+
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+}
+
+// ── グローバルベース ──────────────────────────────────
+html, body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: 'Noto Sans JP', sans-serif;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+}
+
+// ── ローディングオーバーレイ（全画面共通） ────────────
+.loading-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(255, 255, 255, 0.8);
+  z-index: 100;
+}
+
+// ── 画面共通レイアウト ────────────────────────────────
+.screen {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding: 0 var(--spacing-md) var(--spacing-lg);
+  box-sizing: border-box;
+  background-color: var(--color-bg);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  padding: var(--spacing-sm) 0;
+  min-height: 56px;
+  gap: var(--spacing-sm);
+}
+
+.title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  flex: 1;
+  color: var(--color-text);
+}
+
+// ── フォーム画面共通 ──────────────────────────────────
+.form-card {
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  padding: var(--spacing-lg);
+  margin-top: var(--spacing-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.full-width {
+  width: 100%;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-md);
+}
+
+.delete-section {
+  display: flex;
+  justify-content: center;
+  margin-top: 40px;
+  padding-top: var(--spacing-lg);
+  border-top: 1px solid var(--color-divider);
+}
+
+// ── 空データメッセージ共通 ────────────────────────────
+.empty-message {
+  text-align: center;
+  color: var(--color-text-sub);
+  font-size: 1rem;
+  margin-top: var(--spacing-xl);
+}

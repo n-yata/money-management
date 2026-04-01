@@ -3,39 +3,69 @@
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background-color: #f5f5f5;
+  background: linear-gradient(135deg, #1565c0 0%, #1e88e5 50%, #42a5f5 100%);
 }
 
 .login-card {
   width: 100%;
   max-width: 360px;
-  padding: 16px;
+  margin: var(--spacing-md);
+  border-radius: var(--radius-xl) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.24) !important;
 }
 
 .login-content {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 24px;
-  padding: 16px 0;
+  gap: var(--spacing-lg);
+  padding: var(--spacing-xl) var(--spacing-md);
+}
+
+.icon-wrapper {
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #f9a825, #fdd835);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 16px rgba(249, 168, 37, 0.4);
 }
 
 .savings-icon {
-  font-size: 64px;
-  width: 64px;
-  height: 64px;
-  color: #3f51b5;
+  font-size: 48px;
+  width: 48px;
+  height: 48px;
+  color: #ffffff;
+}
+
+.title-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-sm);
 }
 
 .app-title {
   margin: 0;
   font-size: 1.75rem;
-  font-weight: 500;
-  color: rgba(0, 0, 0, 0.87);
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.app-subtitle {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--color-text-sub);
+  text-align: center;
+  line-height: 1.5;
 }
 
 .login-button {
   width: 100%;
-  height: 48px;
-  font-size: 1rem;
+  height: 52px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  border-radius: var(--radius-xl) !important;
 }

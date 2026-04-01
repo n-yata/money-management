@@ -2,6 +2,7 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { DecimalPipe } from '@angular/common';
 import { MatListModule } from '@angular/material/list';
+import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -14,6 +15,7 @@ import { ApiService, AllowanceType } from '../../../core/api.service';
   imports: [
     DecimalPipe,
     MatListModule,
+    MatCardModule,
     MatButtonModule,
     MatIconModule,
     MatProgressSpinnerModule,

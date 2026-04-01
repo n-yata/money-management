@@ -1,4 +1,4 @@
-<!-- ローディングオーバーレイ: API通信中に全画面スピナーを表示 -->
+<!-- ローディングオーバーレイ -->
 @if (loading()) {
 <div class="loading-overlay">
   <mat-spinner></mat-spinner>
@@ -14,12 +14,17 @@
       <mat-icon>settings</mat-icon>
     </button>
   </div>
-  <h1 class="question">名前をえらぶ</h1>
+  <h1 class="question">名前をえらぼう！</h1>
   <div class="card-grid">
-    @for (child of children(); track child.id) {
-    <mat-card class="child-card" (click)="selectChild(child)">
+    @for (child of children(); track child.id; let i = $index) {
+    <mat-card class="child-card" (click)="selectChild(child)"
+      [style.background-color]="getCardBg(i)"
+      [style.border-color]="getCardBorder(i)">
       <mat-card-content>
-        <div class="child-name">{{ child.name }}</div>
+        <div class="child-initial" [style.color]="getCardBorder(i)">
+          {{ child.name.charAt(0) }}
+        </div>
+        <div class="child-name" [style.color]="getCardBorder(i)">{{ child.name }}</div>
       </mat-card-content>
     </mat-card>
     }
@@ -44,11 +49,13 @@
   </div>
   <h1 class="question">なにをしたの？</h1>
   <div class="card-grid">
-    @for (type of allowanceTypes(); track type.id) {
+    @for (type of allowanceTypes(); track type.id; let i = $index) {
     <mat-card class="type-card" (click)="selectType(type)">
       <mat-card-content>
+        <div class="amount-badge" [style.background-color]="getCardBorder(i)">
+          ¥{{ type.amount | number }}
+        </div>
         <div class="type-name">{{ type.name }}</div>
-        <div class="type-amount">¥{{ type.amount | number }}</div>
       </mat-card-content>
     </mat-card>
     }

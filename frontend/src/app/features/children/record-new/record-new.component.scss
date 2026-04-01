@@ -1,53 +1,36 @@
-.screen {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  padding: 0 16px 24px;
-  box-sizing: border-box;
-}
-
-.header {
-  display: flex;
-  align-items: center;
-  padding: 8px 0;
-  min-height: 56px;
-  gap: 8px;
-}
-
-.title {
-  font-size: 1.25rem;
-  font-weight: 500;
-  flex: 1;
-}
-
-.form {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-top: 16px;
+.form-card {
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  padding: var(--spacing-lg);
+  margin-top: var(--spacing-md);
 }
 
 .toggle-group {
-  margin-bottom: 8px;
+  margin-bottom: var(--spacing-md);
+
+  mat-button-toggle-group {
+    width: 100%;
+    border-radius: var(--radius-md) !important;
+    overflow: hidden;
+
+    mat-button-toggle {
+      flex: 1;
+      font-size: 1rem;
+      font-weight: 700;
+      height: 48px;
+    }
+  }
 }
 
-.full-width {
-  width: 100%;
+// 収入トグル選択時（グリーン）
+::ng-deep .mat-button-toggle-checked[value="income"] {
+  background-color: var(--color-income) !important;
+  color: #ffffff !important;
 }
 
-.actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  margin-top: 16px;
-}
-
-.loading-overlay {
-  position: fixed;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: rgba(255, 255, 255, 0.8);
-  z-index: 100;
+// 支出トグル選択時（レッド）
+::ng-deep .mat-button-toggle-checked[value="expense"] {
+  background-color: var(--color-expense) !important;
+  color: #ffffff !important;
 }
