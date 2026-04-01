@@ -58,6 +58,11 @@ Resources:
         AllowMethods: "'GET,POST,PUT,DELETE,OPTIONS'"
         AllowHeaders: "'Content-Type,Authorization'"
         AllowOrigin: !Ref AllowOrigin  # 本番では GitHub Pages の URL を指定（例: "'https://your-account.github.io'"）
+      MethodSettings:
+        - ResourcePath: '/*'
+          HttpMethod: '*'
+          ThrottlingBurstLimit: 20  # 瞬間的に許容する最大リクエスト数
+          ThrottlingRateLimit: 10   # 1秒あたりの上限リクエスト数（家族アプリなので低めに設定）
       Auth:
         DefaultAuthorizer: LambdaAuthorizer
         Authorizers:
