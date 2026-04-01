@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"log"
 	"math/big"
 	"net/http"
 	"os"
@@ -64,6 +65,7 @@ func getPublicKey(kid string) (*rsa.PublicKey, error) {
 
 	resp, err := httpClient.Get(fmt.Sprintf("https://%s/.well-known/jwks.json", domain))
 	if err != nil {
+		log.Printf("failed to fetch JWKS: %v", err)
 		return nil, fmt.Errorf("failed to fetch JWKS: %w", err)
 	}
 	defer resp.Body.Close()
@@ -140,6 +142,7 @@ func handler(_ context.Context, request events.APIGatewayCustomAuthorizerRequest
 		authHeader = request.Headers["authorization"]
 	}
 	if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
+		log.Printf("auth header missing or invalid")
 		return events.APIGatewayCustomAuthorizerResponse{}, fmt.Errorf("Unauthorized")
 	}
 	tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
@@ -147,6 +150,7 @@ func handler(_ context.Context, request events.APIGatewayCustomAuthorizerRequest
 	domain := os.Getenv("AUTH0_DOMAIN")
 	audience := os.Getenv("AUTH0_AUDIENCE")
 	if domain == "" || audience == "" {
+		log.Printf("env vars missing: domain=%q audience=%q", domain, audience)
 		return events.APIGatewayCustomAuthorizerResponse{}, fmt.Errorf("Unauthorized")
 	}
 
@@ -166,15 +170,18 @@ func handler(_ context.Context, request events.APIGatewayCustomAuthorizerRequest
 		gojwt.WithValidMethods([]string{"RS256"}),
 	)
 	if err != nil || !token.Valid {
+		log.Printf("token validation failed: %v", err)
 		return events.APIGatewayCustomAuthorizerResponse{}, fmt.Errorf("Unauthorized")
 	}
 
 	claims, ok := token.Claims.(gojwt.MapClaims)
 	if !ok {
+		log.Printf("failed to parse claims")
 		return events.APIGatewayCustomAuthorizerResponse{}, fmt.Errorf("Unauthorized")
 	}
 	sub, ok := claims["sub"].(string)
 	if !ok || sub == "" {
+		log.Printf("sub claim missing or empty")
 		return events.APIGatewayCustomAuthorizerResponse{}, fmt.Errorf("Unauthorized")
 	}
 

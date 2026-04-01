@@ -65,9 +65,11 @@ Resources:
           ThrottlingRateLimit: 10   # 1秒あたりの上限リクエスト数（家族アプリなので低めに設定）
       Auth:
         DefaultAuthorizer: LambdaAuthorizer
+        AddDefaultAuthorizerToCorsPreflight: false
         Authorizers:
           LambdaAuthorizer:
             FunctionArn: !GetAtt AuthorizerFunction.Arn
+            FunctionPayloadType: REQUEST
             Identity:
               # Authorization ヘッダーのみをキャッシュキーとする REQUEST タイプ Authorizer。
               # ResultTtlInSeconds: 0 で毎回 JWT 検証を行う（ログアウト後の即時無効化）。
