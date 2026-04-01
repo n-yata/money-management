@@ -135,9 +135,14 @@ Auth0 コンソールで **Single Page Application** を作成し、以下を設
 
 | 設定項目 | 値 |
 |---|---|
-| Allowed Callback URLs | `http://localhost:4200, https://<your-github-pages-url>` |
-| Allowed Logout URLs | `http://localhost:4200, https://<your-github-pages-url>` |
-| Allowed Web Origins | `http://localhost:4200, https://<your-github-pages-url>` |
+| Allowed Callback URLs | `http://localhost:4200, https://n-yata.github.io/money-management/` |
+| Allowed Logout URLs | `http://localhost:4200, https://n-yata.github.io/money-management/` |
+| Allowed Web Origins | `http://localhost:4200, https://n-yata.github.io` |
+
+> **注意:** 設定値のパスの有無に注意してください。
+> - Callback / Logout URLs → **パス付き** (`/money-management/`) が必要。ログイン後のリダイレクト先 `redirect_uri` と完全一致させること。
+> - Web Origins → **ドメインのみ**（パスなし）。トークン取得のオリジン検証に使われる。
+> - ローカル開発用の `http://localhost:4200` も忘れずに追加すること。
 
 #### Auth0 API の設定
 
