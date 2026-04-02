@@ -113,6 +113,21 @@
   }
 }
 
+// 今日すでに登録済みの種類（グレーアウト）
+.type-card.done-today {
+  opacity: 0.45;
+  cursor: default;
+  pointer-events: auto;
+
+  &:hover {
+    box-shadow: var(--shadow-card) !important;
+  }
+
+  &:active {
+    transform: none;
+  }
+}
+
 .amount-badge {
   position: absolute;
   top: 0;

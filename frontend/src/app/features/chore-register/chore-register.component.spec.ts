@@ -4,7 +4,7 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { of, throwError } from 'rxjs';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { ChoreRegisterComponent } from './chore-register.component';
-import { ApiService, Child, AllowanceType } from '../../core/api.service';
+import { ApiService, Child, AllowanceType, FinancialRecord } from '../../core/api.service';
 
 // テスト用フィクスチャデータ
 const mockChildren: Child[] = [
@@ -33,12 +33,14 @@ describe('ChoreRegisterComponent', () => {
       'getChildren',
       'getAllowanceTypes',
       'createRecord',
+      'getRecords',
     ]);
     apiServiceSpy.getChildren.and.returnValue(of(mockChildren));
     apiServiceSpy.getAllowanceTypes.and.returnValue(of(mockAllowanceTypes));
     apiServiceSpy.createRecord.and.returnValue(
       of({ id: 'r1', type: 'income', amount: 50, description: 'お皿洗い', date: '2026-03-27', created_at: '2026-03-27T10:00:00Z', allowance_type_id: 't1' })
     );
+    apiServiceSpy.getRecords.and.returnValue(of([]));
 
     routerSpy = jasmine.createSpyObj<Router>('Router', ['navigate']);
 
@@ -89,24 +91,53 @@ describe('ChoreRegisterComponent', () => {
   // ── ステップ1: 子ども選択 ──────────────────────────────────
 
   describe('selectChild', () => {
-    it('子どもを選択するとステップが select-type に変わる', () => {
+    it('子どもを選択するとステップが select-type に変わる', fakeAsync(() => {
       component.selectChild(mockChildren[0]);
+      tick();
       expect(component.step()).toBe('select-type');
-    });
+    }));
 
-    it('選択した子どもが selectedChild シグナルに保存される', () => {
+    it('選択した子どもが selectedChild シグナルに保存される', fakeAsync(() => {
       component.selectChild(mockChildren[1]);
+      tick();
       expect(component.selectedChild()).toEqual(mockChildren[1]);
-    });
+    }));
+
+    it('今日の記録を取得して todayDoneTypeIds を設定する', fakeAsync(() => {
+      const d = new Date();
+      const todayStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      const mockRecords: FinancialRecord[] = [
+        { id: 'r1', type: 'income' as const, amount: 50, description: 'お皿洗い',
+          date: `${todayStr}T00:00:00Z`, created_at: `${todayStr}T10:00:00Z`, allowance_type_id: 't1' },
+      ];
+      apiServiceSpy.getRecords.and.returnValue(of(mockRecords));
+
+      component.selectChild(mockChildren[0]);
+      tick();
+
+      expect(component.todayDoneTypeIds().has('t1')).toBeTrue();
+      expect(component.todayDoneTypeIds().has('t2')).toBeFalse();
+    }));
+
+    it('getRecords がエラーの場合は空セットで select-type に進む', fakeAsync(() => {
+      apiServiceSpy.getRecords.and.returnValue(throwError(() => new Error('500')));
+
+      component.selectChild(mockChildren[0]);
+      tick();
+
+      expect(component.step()).toBe('select-type');
+      expect(component.todayDoneTypeIds().size).toBe(0);
+    }));
   });
 
   // ── ステップ2: お手伝い種類選択 ────────────────────────────
 
   describe('selectType', () => {
-    beforeEach(() => {
+    beforeEach(fakeAsync(() => {
       // ステップ2の前提: 子どもを選択済みにする
       component.selectChild(mockChildren[0]);
-    });
+      tick();
+    }));
 
     it('種類を選択すると createRecord が正しい引数で呼ばれる', fakeAsync(() => {
       const d = new Date();
@@ -148,20 +179,40 @@ describe('ChoreRegisterComponent', () => {
       expect(snackBar.open).toHaveBeenCalledWith('登録に失敗しました', '閉じる', { duration: 3000 });
       expect(component.step()).toBe('select-type');
     });
+
+    it('登録済みの種類をタップすると SnackBar を表示して step を変えない', () => {
+      component.todayDoneTypeIds.set(new Set(['t1']));
+      component.selectType(mockAllowanceTypes[0]); // t1 は登録済み
+      expect(snackBar.open).toHaveBeenCalledWith(
+        'このお手伝いは今日すでに登録されています', '閉じる', { duration: 3000 }
+      );
+      expect(component.step()).toBe('select-type');
+      expect(apiServiceSpy.createRecord).not.toHaveBeenCalled();
+    });
+
+    it('未登録の種類は通常通り登録できる', fakeAsync(() => {
+      component.todayDoneTypeIds.set(new Set(['t1'])); // t1 は登録済み
+      component.selectType(mockAllowanceTypes[1]); // t2 は未登録
+      tick();
+      expect(apiServiceSpy.createRecord).toHaveBeenCalled();
+      expect(component.step()).toBe('done');
+    }));
   });
 
   // ── goBack ───────────────────────────────────────────────────
 
   describe('goBack', () => {
-    it('ステップを select-child に戻して selectedChild をリセットする', () => {
+    it('ステップを select-child に戻して selectedChild と todayDoneTypeIds をリセットする', fakeAsync(() => {
       component.selectChild(mockChildren[0]);
+      tick();
       expect(component.step()).toBe('select-type');
 
       component.goBack();
 
       expect(component.step()).toBe('select-child');
       expect(component.selectedChild()).toBeNull();
-    });
+      expect(component.todayDoneTypeIds().size).toBe(0);
+    }));
   });
 
   // ── reset ────────────────────────────────────────────────────
@@ -170,6 +221,7 @@ describe('ChoreRegisterComponent', () => {
     it('すべての状態をリセットしてステップ1に戻る', fakeAsync(() => {
       // 完了状態まで進める
       component.selectChild(mockChildren[0]);
+      tick();
       component.selectType(mockAllowanceTypes[0]);
       tick();
       expect(component.step()).toBe('done');
@@ -179,6 +231,7 @@ describe('ChoreRegisterComponent', () => {
       expect(component.step()).toBe('select-child');
       expect(component.selectedChild()).toBeNull();
       expect(component.selectedType()).toBeNull();
+      expect(component.todayDoneTypeIds().size).toBe(0);
     }));
   });
 
@@ -241,17 +294,19 @@ describe('ChoreRegisterComponent', () => {
       expect(cards[1].textContent).toContain('はなこ');
     });
 
-    it('ステップ2でお手伝い種類カードが表示される', () => {
+    it('ステップ2でお手伝い種類カードが表示される', fakeAsync(() => {
       component.selectChild(mockChildren[0]);
+      tick();
       fixture.detectChanges();
       const compiled: HTMLElement = fixture.nativeElement;
       const cards = compiled.querySelectorAll('.type-card');
       expect(cards.length).toBe(mockAllowanceTypes.length);
       expect(cards[0].textContent).toContain('お皿洗い');
-    });
+    }));
 
     it('完了画面で子ども名・種類名・金額が表示される', fakeAsync(() => {
       component.selectChild(mockChildren[0]);
+      tick();
       component.selectType(mockAllowanceTypes[0]);
       tick();
       fixture.detectChanges();

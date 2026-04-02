@@ -50,7 +50,7 @@
   <h1 class="question">なにをしたの？</h1>
   <div class="card-grid">
     @for (type of allowanceTypes(); track type.id; let i = $index) {
-    <mat-card class="type-card" (click)="selectType(type)">
+    <mat-card class="type-card" [class.done-today]="todayDoneTypeIds().has(type.id)" (click)="selectType(type)">
       <mat-card-content>
         <div class="amount-badge" [style.background-color]="getCardBorder(i)">
           ¥{{ type.amount | number }}

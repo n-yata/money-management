@@ -307,6 +307,74 @@ func TestCreateRecord(t *testing.T) {
 			t.Errorf("StatusCode = %d, want %d", resp.StatusCode, http.StatusNotFound)
 		}
 	})
+
+	t.Run("同じ日・同じ種類のお手伝いは重複登録できない（409 Conflict）", func(t *testing.T) {
+		db := newTestDB(t)
+		user := newTestUser(t, ctx, db)
+		child := insertChild(t, ctx, db, user.ID)
+		at := insertAllowanceType(t, ctx, db, user.ID)
+		body := fmt.Sprintf(`{"type":"income","amount":50,"description":"お皿洗い","date":"2026-03-01","allowance_type_id":"%s"}`, at.ID.Hex())
+
+		// 1回目は成功
+		resp, err := createRecord(ctx, db, user, child.ID.Hex(), body)
+		if err != nil {
+			t.Fatalf("createRecord() error = %v", err)
+		}
+		if resp.StatusCode != http.StatusCreated {
+			t.Errorf("1回目 StatusCode = %d, want %d", resp.StatusCode, http.StatusCreated)
+		}
+
+		// 2回目は重複エラー
+		resp, err = createRecord(ctx, db, user, child.ID.Hex(), body)
+		if err != nil {
+			t.Fatalf("createRecord() error = %v", err)
+		}
+		if resp.StatusCode != http.StatusConflict {
+			t.Errorf("2回目 StatusCode = %d, want %d", resp.StatusCode, http.StatusConflict)
+		}
+	})
+
+	t.Run("別の日なら同じ種類でも登録できる", func(t *testing.T) {
+		db := newTestDB(t)
+		user := newTestUser(t, ctx, db)
+		child := insertChild(t, ctx, db, user.ID)
+		at := insertAllowanceType(t, ctx, db, user.ID)
+
+		body1 := fmt.Sprintf(`{"type":"income","amount":50,"description":"お皿洗い","date":"2026-03-01","allowance_type_id":"%s"}`, at.ID.Hex())
+		resp, err := createRecord(ctx, db, user, child.ID.Hex(), body1)
+		if err != nil {
+			t.Fatalf("createRecord() error = %v", err)
+		}
+		if resp.StatusCode != http.StatusCreated {
+			t.Errorf("1日目 StatusCode = %d, want %d", resp.StatusCode, http.StatusCreated)
+		}
+
+		body2 := fmt.Sprintf(`{"type":"income","amount":50,"description":"お皿洗い","date":"2026-03-02","allowance_type_id":"%s"}`, at.ID.Hex())
+		resp, err = createRecord(ctx, db, user, child.ID.Hex(), body2)
+		if err != nil {
+			t.Fatalf("createRecord() error = %v", err)
+		}
+		if resp.StatusCode != http.StatusCreated {
+			t.Errorf("翌日 StatusCode = %d, want %d", resp.StatusCode, http.StatusCreated)
+		}
+	})
+
+	t.Run("allowance_type_idなしの記録は同日複数登録できる", func(t *testing.T) {
+		db := newTestDB(t)
+		user := newTestUser(t, ctx, db)
+		child := insertChild(t, ctx, db, user.ID)
+		body := `{"type":"income","amount":500,"description":"手動記録","date":"2026-03-01"}`
+
+		for i := 0; i < 2; i++ {
+			resp, err := createRecord(ctx, db, user, child.ID.Hex(), body)
+			if err != nil {
+				t.Fatalf("createRecord() error = %v", err)
+			}
+			if resp.StatusCode != http.StatusCreated {
+				t.Errorf("登録%d回目 StatusCode = %d, want %d", i+1, resp.StatusCode, http.StatusCreated)
+			}
+		}
+	})
 }
 
 // ─── deleteRecord のテスト ───────────────────────────────────

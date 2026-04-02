@@ -50,6 +50,8 @@ export class ChoreRegisterComponent implements OnInit {
   selectedChild = signal<Child | null>(null);
   /** 選択中のお手伝い種類 */
   selectedType = signal<AllowanceType | null>(null);
+  /** 今日すでに登録済みのお手伝い種類IDセット */
+  todayDoneTypeIds = signal<Set<string>>(new Set());
 
   ngOnInit(): void {
     // forkJoin で子ども一覧とお手伝い種類を並行取得し、loading を一元管理する
@@ -70,16 +72,42 @@ export class ChoreRegisterComponent implements OnInit {
     });
   }
 
-  /** 子どもを選択してステップ2へ進む */
+  /** 子どもを選択してステップ2へ進む（今日の記録を取得して登録済み種類を判定） */
   selectChild(child: Child): void {
     this.selectedChild.set(child);
-    this.step.set('select-type');
+    this.loading.set(true);
+
+    const d = new Date();
+    this.api.getRecords(child.id, d.getFullYear(), d.getMonth() + 1).subscribe({
+      next: (records) => {
+        const todayStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        const doneIds = new Set(
+          records
+            .filter(r => r.allowance_type_id != null && r.date.startsWith(todayStr))
+            .map(r => r.allowance_type_id!)
+        );
+        this.todayDoneTypeIds.set(doneIds);
+        this.loading.set(false);
+        this.step.set('select-type');
+      },
+      error: () => {
+        this.todayDoneTypeIds.set(new Set());
+        this.loading.set(false);
+        this.step.set('select-type');
+      },
+    });
   }
 
   /** お手伝い種類を選択してAPIに登録する */
   selectType(type: AllowanceType): void {
     const child = this.selectedChild();
     if (!child) return;
+
+    // 今日すでに登録済みの種類はSnackBarで通知してブロック
+    if (this.todayDoneTypeIds().has(type.id)) {
+      this.snackBar.open('このお手伝いは今日すでに登録されています', '閉じる', { duration: 3000 });
+      return;
+    }
 
     this.loading.set(true);
     // 今日の日付を YYYY-MM-DD 形式で取得
@@ -98,8 +126,12 @@ export class ChoreRegisterComponent implements OnInit {
         this.step.set('done');
         this.loading.set(false);
       },
-      error: () => {
-        this.snackBar.open('登録に失敗しました', '閉じる', { duration: 3000 });
+      error: (err) => {
+        // バックエンドが 409 Conflict で返す重複メッセージも適切に表示する
+        const msg = err?.error?.message === 'このお手伝いは今日すでに登録されています'
+          ? 'このお手伝いは今日すでに登録されています'
+          : '登録に失敗しました';
+        this.snackBar.open(msg, '閉じる', { duration: 3000 });
         this.loading.set(false);
       },
     });
@@ -109,6 +141,7 @@ export class ChoreRegisterComponent implements OnInit {
   goBack(): void {
     this.step.set('select-child');
     this.selectedChild.set(null);
+    this.todayDoneTypeIds.set(new Set());
   }
 
   /** 完了後にステップ1へリセットして続けて登録できるようにする */
@@ -116,6 +149,7 @@ export class ChoreRegisterComponent implements OnInit {
     this.step.set('select-child');
     this.selectedChild.set(null);
     this.selectedType.set(null);
+    this.todayDoneTypeIds.set(new Set());
   }
 
   /** 管理画面（ダッシュボード）へ遷移する */

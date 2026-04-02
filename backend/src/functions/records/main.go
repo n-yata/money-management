@@ -199,6 +199,23 @@ func createRecord(ctx context.Context, db *mongo.Database, user models.User, chi
 		record.AllowanceTypeID = &atOID
 	}
 
+	// 同じ日・同じ子ども・同じ種類のお手伝いは1日1回まで
+	if record.AllowanceTypeID != nil {
+		dupCount, err := db.Collection(models.CollectionRecords).CountDocuments(ctx,
+			bson.M{
+				"child_id":          child.ID,
+				"allowance_type_id": record.AllowanceTypeID,
+				"date":              date,
+			},
+		)
+		if err != nil {
+			return lib.ErrorResponse(http.StatusInternalServerError, "INTERNAL_ERROR", "重複チェックに失敗しました"), nil
+		}
+		if dupCount > 0 {
+			return lib.ErrorResponse(http.StatusConflict, "DUPLICATE_CHORE", "このお手伝いは今日すでに登録されています"), nil
+		}
+	}
+
 	if _, err := db.Collection(models.CollectionRecords).InsertOne(ctx, record); err != nil {
 		return lib.ErrorResponse(http.StatusInternalServerError, "INTERNAL_ERROR", "収支記録の登録に失敗しました"), nil
 	}
