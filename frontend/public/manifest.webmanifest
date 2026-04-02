@@ -1,6 +1,8 @@
 {
-  "name": "frontend",
-  "short_name": "frontend",
+  "name": "おこずかい管理",
+  "short_name": "おこずかい",
+  "theme_color": "#1565c0",
+  "background_color": "#1565c0",
   "display": "standalone",
   "scope": "./",
   "start_url": "./",
