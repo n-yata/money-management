@@ -61,16 +61,6 @@ jobs:
             exit 1
           fi
 
-      - name: "Check total backend coverage (target: 70%)"
-        run: |
-          TOTAL=$(go tool cover -func=coverage.out | tail -1 | awk '{gsub(/%/, "", $3); print $3}')
-          echo "Total coverage: ${TOTAL}%"
-          result=$(echo "${TOTAL} >= 70" | bc -l)
-          if [ "$result" -ne 1 ]; then
-            echo "::error::Total coverage ${TOTAL}% is below the required 70%"
-            exit 1
-          fi
-
       - name: Upload coverage report
         uses: actions/upload-artifact@v4
         with:
@@ -106,6 +96,18 @@ jobs:
 
       - name: Show integration test coverage
         run: go tool cover -func=coverage-integration.out
+
+      - name: "Check total backend coverage (target: 70%)"
+        # ハンドラーのテストは //go:build integration タグ付きのため、
+        # 全体カバレッジは統合テスト結果（coverage-integration.out）で計測する
+        run: |
+          TOTAL=$(go tool cover -func=coverage-integration.out | tail -1 | awk '{gsub(/%/, "", $3); print $3}')
+          echo "Total coverage: ${TOTAL}%"
+          result=$(echo "${TOTAL} >= 70" | bc -l)
+          if [ "$result" -ne 1 ]; then
+            echo "::error::Total coverage ${TOTAL}% is below the required 70%"
+            exit 1
+          fi
 
       - name: Upload coverage report
         uses: actions/upload-artifact@v4
