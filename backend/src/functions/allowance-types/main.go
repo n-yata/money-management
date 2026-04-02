@@ -74,6 +74,8 @@ func handler(ctx context.Context, req events.APIGatewayProxyRequest) (events.API
 	switch {
 	case method == http.MethodGet && !hasID:
 		return listAllowanceTypes(ctx, db, user)
+	case method == http.MethodGet && hasID:
+		return getAllowanceType(ctx, db, user, typeID)
 	case method == http.MethodPost && !hasID:
 		return createAllowanceType(ctx, db, user, req.Body)
 	case method == http.MethodPut && hasID:
@@ -104,6 +106,19 @@ func listAllowanceTypes(ctx context.Context, db *mongo.Database, user models.Use
 		types = []models.AllowanceType{}
 	}
 	return lib.JSONResponse(http.StatusOK, map[string]any{"data": types}), nil
+}
+
+// ─── GET /api/v1/allowance-types/:id ────────────────────────
+
+func getAllowanceType(ctx context.Context, db *mongo.Database, user models.User, idStr string) (events.APIGatewayProxyResponse, error) {
+	at, found, err := findOwnedAllowanceType(ctx, db, user.ID, idStr)
+	if err != nil {
+		return lib.ErrorResponse(http.StatusInternalServerError, "INTERNAL_ERROR", "種類情報の取得に失敗しました"), nil
+	}
+	if !found {
+		return lib.ErrorResponse(http.StatusNotFound, "NOT_FOUND", "指定された種類が見つかりません"), nil
+	}
+	return lib.JSONResponse(http.StatusOK, map[string]any{"data": at}), nil
 }
 
 // ─── POST /api/v1/allowance-types ───────────────────────────

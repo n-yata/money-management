@@ -172,6 +172,64 @@ func TestListAllowanceTypes(t *testing.T) {
 	})
 }
 
+// ─── getAllowanceType のテスト ────────────────────────────────
+
+func TestGetAllowanceType(t *testing.T) {
+	ctx := context.Background()
+
+	t.Run("正常に種類を1件取得できる", func(t *testing.T) {
+		db := newTestDB(t)
+		user := newTestUser(t, ctx, db)
+		at := insertAllowanceType(t, ctx, db, user.ID, "お皿洗い", 50)
+
+		resp, err := getAllowanceType(ctx, db, user, at.ID.Hex())
+		if err != nil {
+			t.Fatalf("getAllowanceType() error = %v", err)
+		}
+		if resp.StatusCode != http.StatusOK {
+			t.Errorf("StatusCode = %d, want %d", resp.StatusCode, http.StatusOK)
+		}
+
+		var result map[string]models.AllowanceType
+		json.Unmarshal([]byte(resp.Body), &result)
+		got := result["data"]
+		if got.Name != "お皿洗い" {
+			t.Errorf("Name = %q, want %q", got.Name, "お皿洗い")
+		}
+		if got.Amount != 50 {
+			t.Errorf("Amount = %d, want 50", got.Amount)
+		}
+	})
+
+	t.Run("存在しないIDは404を返す", func(t *testing.T) {
+		db := newTestDB(t)
+		user := newTestUser(t, ctx, db)
+
+		resp, err := getAllowanceType(ctx, db, user, bson.NewObjectID().Hex())
+		if err != nil {
+			t.Fatalf("getAllowanceType() error = %v", err)
+		}
+		if resp.StatusCode != http.StatusNotFound {
+			t.Errorf("StatusCode = %d, want %d", resp.StatusCode, http.StatusNotFound)
+		}
+	})
+
+	t.Run("他ユーザーの種類は404を返す（所有権チェック）", func(t *testing.T) {
+		db := newTestDB(t)
+		user1 := newTestUser(t, ctx, db)
+		user2 := newTestUser(t, ctx, db)
+		at := insertAllowanceType(t, ctx, db, user2.ID, "他人の種類", 100)
+
+		resp, err := getAllowanceType(ctx, db, user1, at.ID.Hex())
+		if err != nil {
+			t.Fatalf("getAllowanceType() error = %v", err)
+		}
+		if resp.StatusCode != http.StatusNotFound {
+			t.Errorf("StatusCode = %d, want %d", resp.StatusCode, http.StatusNotFound)
+		}
+	})
+}
+
 // ─── createAllowanceType のテスト ────────────────────────────
 
 func TestCreateAllowanceType(t *testing.T) {

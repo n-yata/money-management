@@ -163,6 +163,12 @@ Resources:
             RestApiId: !Ref MoneyManagementApi
             Path: /api/v1/allowance-types
             Method: POST
+        GetAllowanceType:
+          Type: Api
+          Properties:
+            RestApiId: !Ref MoneyManagementApi
+            Path: /api/v1/allowance-types/{id}
+            Method: GET
         UpdateAllowanceType:
           Type: Api
           Properties:
