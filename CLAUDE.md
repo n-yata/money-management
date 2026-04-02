@@ -30,9 +30,10 @@ money-management/
 │   │   │   ├── core/           # シングルトンサービス、ガード
 │   │   │   ├── shared/         # 共有コンポーネント、パイプ
 │   │   │   └── features/       # 機能モジュール
-│   │   │       ├── dashboard/  # ホーム画面
-│   │   │       ├── children/   # 子ども管理（複数人対応）
-│   │   │       └── records/    # 収支記録
+│   │   │       ├── dashboard/      # ホーム画面
+│   │   │       ├── children/       # 子ども管理（複数人対応）
+│   │   │       ├── allowance-types/ # おこづかい種類管理
+│   │   │       └── chore-register/ # お手伝い登録（子ども向け）
 │   │   └── environments/
 │   └── ngsw-config.json        # Service Worker設定
 └── backend/                    # AWS Lambda関数群
@@ -97,14 +98,15 @@ money-management/
 - AngularのAuthGuardはUI上の保護（UX目的）、APIレベルはLambda Authorizerで担保
 - ユーザーは自分の `auth0_sub` に紐づくデータのみ操作可能
 
-## 主要機能（予定）
+## 主要機能
 
-- [ ] 子ども情報の管理（名前、年齢、目標金額など）
-- [ ] おこずかいの収入記録（親が渡す）
-- [ ] 支出記録（子どもが使った金額）
-- [ ] 残高の確認
-- [ ] 収支履歴の表示
-- [ ] PWA対応（オフライン閲覧、ホーム画面追加）
+- [x] 子ども情報の管理（名前、年齢、基本おこずかい額）
+- [x] おこずかいの種類管理（種類名・報酬金額）
+- [x] お手伝い登録（子ども向けのシンプルUI。種類ごとに1日1回まで）
+- [x] 収入・支出の記録（親が手動登録）
+- [x] 残高の確認（子ども詳細画面）
+- [x] 収支履歴の表示（月フィルタあり）
+- [x] PWA対応（ホーム画面追加・Service Worker）
 
 ## 開発ルール
 
@@ -129,7 +131,7 @@ money-management/
 
 ### テスト
 - グローバルの `CLAUDE.md` に記載のテスト原則を遵守する
-- ユニットテスト: `go test` + `memongo`（バックエンド）/ Karma + Jasmine（フロントエンド）
+- ユニットテスト: `go test` + `testcontainers`（バックエンド統合テスト）/ Karma + Jasmine（フロントエンド）
 - E2Eテスト: Playwright（必要に応じて）
 - Lambda関数のローカルテストは `sam local` を使用する
 
@@ -351,6 +353,7 @@ graph LR
 |---------|------|------|
 | `GET` | `/api/v1/allowance-types` | 種類一覧取得 |
 | `POST` | `/api/v1/allowance-types` | 種類追加 |
+| `GET` | `/api/v1/allowance-types/:id` | 種類詳細取得 |
 | `PUT` | `/api/v1/allowance-types/:id` | 種類更新 |
 | `DELETE` | `/api/v1/allowance-types/:id` | 種類削除 |
 

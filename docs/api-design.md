@@ -72,6 +72,7 @@ Authorization: Bearer <Auth0アクセストークン>
 | 401 | `UNAUTHORIZED` | 認証トークンなし・無効 |
 | 403 | `FORBIDDEN` | 他ユーザーのリソースへのアクセス |
 | 404 | `NOT_FOUND` | リソースが存在しない |
+| 409 | `DUPLICATE_CHORE` | 同日・同種類のお手伝いがすでに登録済み |
 | 500 | `INTERNAL_ERROR` | サーバー内部エラー |
 
 ### IDの形式
@@ -97,6 +98,7 @@ Authorization: Bearer <Auth0アクセストークン>
 |---------|------|------|
 | `GET` | `/api/v1/allowance-types` | 種類一覧取得 |
 | `POST` | `/api/v1/allowance-types` | 種類追加 |
+| `GET` | `/api/v1/allowance-types/:id` | 種類詳細取得 |
 | `PUT` | `/api/v1/allowance-types/:id` | 種類更新 |
 | `DELETE` | `/api/v1/allowance-types/:id` | 種類削除 |
 
@@ -353,7 +355,7 @@ Authorization: Bearer <Auth0アクセストークン>
 | `amount` | 必須、整数、1以上 |
 | `description` | 必須、1〜50文字 |
 | `date` | 必須、`YYYY-MM-DD` 形式 |
-| `allowance_type_id` | 任意、指定する場合は自分のユーザーに紐づく種類IDであること |
+| `allowance_type_id` | 任意、指定する場合は自分のユーザーに紐づく種類IDであること。同じ `child_id`・`allowance_type_id`・`date` の組み合わせは1件のみ登録可能（1日1回制限） |
 
 **レスポンス `201 Created`:**
 ```json
@@ -370,6 +372,12 @@ Authorization: Bearer <Auth0アクセストークン>
   }
 }
 ```
+
+---
+
+**エラー:**
+- `404 Not Found`: 子どもが存在しない、または他ユーザーのリソース
+- `409 Conflict` (`DUPLICATE_CHORE`): `allowance_type_id` を指定した場合、同日・同種類がすでに登録済み
 
 ---
 
@@ -422,6 +430,33 @@ Authorization: Bearer <Auth0アクセストークン>
   ]
 }
 ```
+
+---
+
+### GET `/api/v1/allowance-types/:id`
+
+特定の種類の詳細情報を取得する。
+
+**パスパラメータ:**
+| パラメータ | 説明 |
+|-----------|------|
+| `id` | 種類のID |
+
+**レスポンス `200 OK`:**
+```json
+{
+  "data": {
+    "id": "661a2b3c4d5e6f7a8b9c0f1a",
+    "name": "お皿洗い",
+    "amount": 50,
+    "created_at": "2026-01-01T00:00:00Z",
+    "updated_at": "2026-01-01T00:00:00Z"
+  }
+}
+```
+
+**エラー:**
+- `404 Not Found`: 指定IDの種類が存在しない、または他ユーザーのリソース
 
 ---
 
