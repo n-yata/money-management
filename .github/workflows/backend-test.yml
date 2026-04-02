@@ -53,8 +53,7 @@ jobs:
         run: |
           COVERAGE=$(go tool cover -func=coverage.out \
             | grep "^github.com/n-yata/money-management/backend/src/functions/authorizer/" \
-            | grep -v ":main\b" \
-            | awk '{gsub(/%/, "", $3); sum += $3; count++} END {if (count > 0) printf "%.1f", sum/count; else print "0"}')
+            | awk '$2 != "main" {gsub(/%/, "", $3); sum += $3; count++} END {if (count > 0) printf "%.1f", sum/count; else print "0"}')
           echo "authorizer coverage (excluding main): ${COVERAGE}%"
           result=$(echo "${COVERAGE} >= 85" | bc -l)
           if [ "$result" -ne 1 ]; then
