@@ -245,7 +245,7 @@ erDiagram
 
 Goでは各コレクションに対応する構造体を定義し、`bson` タグでシリアライズ/デシリアライズを行う。
 
-## セットアップ手順（今後更新）
+## セットアップ手順
 
 ```bash
 # フロントエンド
@@ -258,6 +258,22 @@ cd backend
 go build ./...                     # Goビルド
 sam build && sam local start-api   # AWS SAMでローカル起動
 ```
+
+### PWA アイコンの再生成
+
+アイコンデザインを変更したい場合は、`sharp`（devDependency として追加済み）を使って再生成する。
+
+```bash
+cd frontend
+
+# generate-icons.mjs を作成してSVGを編集後、実行：
+node generate-icons.mjs
+# → public/icons/ 以下の全サイズ（72〜512px）が上書きされる
+```
+
+- アイコンのデザイン（SVG）は `generate-icons.mjs` 内に直書きされている
+- スクリプト実行後はファイルを削除してコミットしてよい（アイコン自体をコミットする）
+- カラーはアプリのプライマリカラー `#1565c0`（ブルー）と `#f9a825`（アンバー/¥コイン）を使用
 
 ## 画面一覧
 
