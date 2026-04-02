@@ -94,7 +94,8 @@ jobs:
         run: go mod download
 
       - name: Run integration tests with coverage
-        run: go test -tags=integration -cover -coverprofile=coverage-integration.out -timeout=120s ./src/functions/... ./src/lib/...
+        # -coverpkg=./... でクロスパッケージカバレッジを計測する（ハンドラーから呼ばれる lib パッケージも反映）
+        run: go test -tags=integration -cover -coverpkg=./... -coverprofile=coverage-integration.out -timeout=120s ./src/functions/... ./src/lib/...
 
       - name: Show integration test coverage
         run: go tool cover -func=coverage-integration.out
