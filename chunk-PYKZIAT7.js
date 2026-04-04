@@ -1,0 +1,1 @@
+import{d as r}from"./chunk-2LNUE3N2.js";function u(e){return e.group({name:["",[r.required,r.maxLength(20)]],age:[null,[r.required,r.min(1),r.max(18)]],base_allowance:[null,[r.required,r.min(0)]]})}export{u as a};
