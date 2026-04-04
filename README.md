@@ -220,8 +220,7 @@ sam deploy \
 ### GitHub Actions Secrets
 
 GitHub リポジトリの **Settings → Secrets and variables → Actions** で設定します。
-
-#### フロントエンド自動デプロイ（GitHub Pages）
+フロントエンドの自動デプロイ（GitHub Pages）に必要です。
 
 | Secret 名 | 説明 | 取得元 |
 |---|---|---|
@@ -232,17 +231,6 @@ GitHub リポジトリの **Settings → Secrets and variables → Actions** で
 
 > `API_BASE_URL` は AWS バックエンドのデプロイ完了後に設定してください。
 > `GITHUB_TOKEN` は GitHub が自動で提供するため設定不要です。
-
-#### バックエンド自動デプロイ（AWS SAM）
-
-| Secret 名 | 説明 | 取得元 |
-|---|---|---|
-| `AWS_ACCESS_KEY_ID` | AWS IAM ユーザーのアクセスキーID | AWS コンソール > IAM |
-| `AWS_SECRET_ACCESS_KEY` | AWS IAM ユーザーのシークレットアクセスキー | AWS コンソール > IAM |
-| `MONGODB_URI` | MongoDB Atlas の接続URI | Atlas コンソール > Connect |
-| `AUTH0_DOMAIN` | Auth0 テナントドメイン（フロントエンドと共通） | Auth0 コンソール > Settings |
-| `AUTH0_AUDIENCE` | Auth0 API の Identifier（フロントエンドと共通） | Auth0 コンソール > APIs |
-| `CORS_ALLOW_ORIGIN` | CORS 許可オリジン（例: `https://your-account.github.io`） | GitHub Pages URL |
 
 ---
 
