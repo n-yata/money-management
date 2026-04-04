@@ -60,6 +60,10 @@ jobs:
         working-directory: frontend
         run: npm ci
 
+      - name: Setup environment.ts (required for build resolution)
+        working-directory: frontend
+        run: cp src/environments/environment.ts.example src/environments/environment.ts
+
       - name: Inject production environment variables
         working-directory: frontend
         run: |
