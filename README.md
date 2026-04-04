@@ -239,7 +239,6 @@ GitHub リポジトリの **Settings → Secrets and variables → Actions** で
 |---|---|---|
 | `AWS_ACCESS_KEY_ID` | AWS IAM ユーザーのアクセスキーID | AWS コンソール > IAM |
 | `AWS_SECRET_ACCESS_KEY` | AWS IAM ユーザーのシークレットアクセスキー | AWS コンソール > IAM |
-| `AWS_REGION` | デプロイリージョン（例: `ap-northeast-1`） | — |
 | `MONGODB_URI` | MongoDB Atlas の接続URI | Atlas コンソール > Connect |
 | `AUTH0_DOMAIN` | Auth0 テナントドメイン（フロントエンドと共通） | Auth0 コンソール > Settings |
 | `AUTH0_AUDIENCE` | Auth0 API の Identifier（フロントエンドと共通） | Auth0 コンソール > APIs |
