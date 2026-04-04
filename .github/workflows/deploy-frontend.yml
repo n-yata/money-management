@@ -32,6 +32,10 @@ jobs:
         working-directory: frontend
         run: npm ci
 
+      - name: Setup environment.ts for testing
+        working-directory: frontend
+        run: cp src/environments/environment.ts.example src/environments/environment.ts
+
       - name: Run unit tests
         working-directory: frontend
         run: npx ng test --watch=false --browsers=ChromeHeadless

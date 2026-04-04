@@ -19,13 +19,13 @@ func TestJSONResponse(t *testing.T) {
 		wantOrigin       string
 	}{
 		{
-			name:             "正常なbodyをJSONシリアライズして返す",
+			name:             "CORS_ALLOW_ORIGINが未設定の場合は空文字を返す",
 			status:           http.StatusOK,
 			body:             map[string]string{"key": "value"},
 			corsOrigin:       "",
 			wantStatus:       http.StatusOK,
 			wantBodyContains: `"key":"value"`,
-			wantOrigin:       "*",
+			wantOrigin:       "",
 		},
 		{
 			name:             "CORS_ALLOW_ORIGINが設定されている場合はそれを使う",
@@ -52,7 +52,7 @@ func TestJSONResponse(t *testing.T) {
 			corsOrigin:       "",
 			wantStatus:       http.StatusInternalServerError,
 			wantBodyContains: "INTERNAL_ERROR",
-			wantOrigin:       "*",
+			wantOrigin:       "",
 		},
 	}
 
