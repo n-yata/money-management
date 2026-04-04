@@ -21,6 +21,7 @@ describe('authGuard', () => {
   beforeEach(() => {
     authServiceSpy = jasmine.createSpyObj<AuthService>('AuthService', ['loginWithRedirect'], {
       isAuthenticated$: of(false), // デフォルトは未認証
+      isLoading$: of(false),       // デフォルトはロード完了
     });
 
     TestBed.configureTestingModule({
@@ -90,6 +91,7 @@ describe('authGuard', () => {
 
       const authSpy = jasmine.createSpyObj<AuthService>('AuthService', ['loginWithRedirect'], {
         isAuthenticated$: auth$.asObservable(),
+        isLoading$: of(false),
       });
 
       TestBed.overrideProvider(AuthService, { useValue: authSpy });
@@ -111,6 +113,7 @@ describe('authGuard', () => {
 
       const authSpy = jasmine.createSpyObj<AuthService>('AuthService', ['loginWithRedirect'], {
         isAuthenticated$: auth$.asObservable(),
+        isLoading$: of(false),
       });
 
       TestBed.overrideProvider(AuthService, { useValue: authSpy });
