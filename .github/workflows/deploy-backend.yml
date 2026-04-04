@@ -1,0 +1,61 @@
+name: Deploy Backend to AWS
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "backend/**"
+      - ".github/workflows/deploy-backend.yml"
+  workflow_dispatch:
+  workflow_run:
+    workflows: ["Backend Tests"]
+    types:
+      - completed
+    branches: [main]
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    # workflow_run 経由の場合はテストが成功した時のみデプロイ
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.25"
+          cache-dependency-path: backend/go.sum
+
+      - name: Setup AWS SAM CLI
+        uses: aws-actions/setup-sam@v2
+        with:
+          use-installer: true
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: SAM Build
+        working-directory: backend
+        run: sam build
+
+      - name: SAM Deploy
+        working-directory: backend
+        run: |
+          sam deploy \
+            --no-confirm-changeset \
+            --no-fail-on-empty-changeset \
+            --parameter-overrides \
+              "MongoDBUri=${{ secrets.MONGODB_URI }}" \
+              "Auth0Domain=${{ secrets.AUTH0_DOMAIN }}" \
+              "Auth0Audience=${{ secrets.AUTH0_AUDIENCE }}" \
+              "AllowOrigin=${{ secrets.CORS_ALLOW_ORIGIN }}" \
+              "LocalAuth0Sub=" \
+              "Environment=production"

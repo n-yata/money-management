@@ -92,6 +92,16 @@ describe('ChildEditComponent', () => {
       expect(router.navigate).toHaveBeenCalledWith(['/children', 'child-1']);
     }));
 
+    it('フォームが invalid のとき save() を呼んでも updateChild が呼ばれないこと', fakeAsync(() => {
+      // name を空にしてフォームを invalid にする
+      component.form.get('name')!.setValue('');
+
+      component.save();
+      tick();
+
+      expect(apiService.updateChild).not.toHaveBeenCalled();
+    }));
+
     it('保存失敗時に SnackBar が表示されること', fakeAsync(() => {
       apiService.updateChild.and.returnValue(throwError(() => new Error('API error')));
 

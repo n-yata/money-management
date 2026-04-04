@@ -25,7 +25,8 @@ var mongoURI string
 
 func TestMain(m *testing.M) {
 	ctx := context.Background()
-	container, err := mongodb.Run(ctx, "mongo:6.0")
+	// WithReplicaSet を使用してシングルノードレプリカセットを起動する（トランザクション対応）
+	container, err := mongodb.Run(ctx, "mongo:6.0", mongodb.WithReplicaSet("rs0"))
 	if err != nil {
 		log.Fatalf("MongoDBコンテナ起動失敗: %v", err)
 	}
@@ -39,6 +40,9 @@ func TestMain(m *testing.M) {
 	if err != nil {
 		log.Fatalf("接続URI取得失敗: %v", err)
 	}
+	// Docker Desktop（Windows）ではレプリカセットの内部IPに接続できないため
+	// directConnection=true でトポロジー探索をスキップする
+	mongoURI += "&directConnection=true"
 
 	os.Exit(m.Run())
 }

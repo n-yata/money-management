@@ -9,6 +9,8 @@ Globals:
       - x86_64
     Timeout: 30
     MemorySize: 128
+    Policies:
+      - AWSLambdaBasicExecutionRole
     Environment:
       Variables:
         MONGODB_URI: !Ref MongoDBUri
@@ -212,6 +214,37 @@ Resources:
             RestApiId: !Ref MoneyManagementApi
             Path: /api/v1/children/{id}/records/{recordId}
             Method: DELETE
+
+  # ─────────────────────────────────────────
+  # CloudWatch Logs
+  # ─────────────────────────────────────────
+  AuthorizerFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    DependsOn: AuthorizerFunction
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${AuthorizerFunction}'
+      RetentionInDays: 30
+
+  ChildrenFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    DependsOn: ChildrenFunction
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${ChildrenFunction}'
+      RetentionInDays: 30
+
+  AllowanceTypesFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    DependsOn: AllowanceTypesFunction
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${AllowanceTypesFunction}'
+      RetentionInDays: 30
+
+  RecordsFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    DependsOn: RecordsFunction
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${RecordsFunction}'
+      RetentionInDays: 30
 
 Outputs:
   ApiUrl:

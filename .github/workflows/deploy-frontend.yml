@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - "frontend/**"
+      - ".github/workflows/deploy-frontend.yml"
   workflow_dispatch:
 
 # gh-pages ブランチへの push 権限が必要
@@ -12,8 +13,8 @@ permissions:
   contents: write
 
 jobs:
-  build-and-deploy:
-    name: Build & Deploy
+  test:
+    name: Test
     runs-on: ubuntu-latest
 
     steps:
@@ -34,6 +35,26 @@ jobs:
       - name: Run unit tests
         working-directory: frontend
         run: npx ng test --watch=false --browsers=ChromeHeadless
+
+  deploy:
+    name: Deploy
+    needs: test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
 
       - name: Inject production environment variables
         working-directory: frontend

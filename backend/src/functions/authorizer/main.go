@@ -47,7 +47,9 @@ type jwk struct {
 }
 
 // getPublicKey はkidに対応するRSA公開鍵を返す。キャッシュが有効な場合はキャッシュを使用する。
+// double-checked lockingパターンで実装: RLockで高速チェック後、ミス時はLockで再チェック+更新。
 func getPublicKey(kid string) (*rsa.PublicKey, error) {
+	// 読み取りロックで高速パス（キャッシュヒット時）
 	cache.mu.RLock()
 	if time.Since(cache.fetchedAt) < cacheTTL {
 		if key, ok := cache.keys[kid]; ok {
@@ -56,6 +58,15 @@ func getPublicKey(kid string) (*rsa.PublicKey, error) {
 		}
 	}
 	cache.mu.RUnlock()
+
+	// 書き込みロック取得後に再チェック（他のgoroutineが既に更新済みの場合はスキップ）
+	cache.mu.Lock()
+	defer cache.mu.Unlock()
+	if time.Since(cache.fetchedAt) < cacheTTL {
+		if key, ok := cache.keys[kid]; ok {
+			return key, nil
+		}
+	}
 
 	// キャッシュミスまたはTTL切れ → JWKSを再取得
 	domain := os.Getenv("AUTH0_DOMAIN")
@@ -87,10 +98,8 @@ func getPublicKey(kid string) (*rsa.PublicKey, error) {
 		newKeys[k.Kid] = pub
 	}
 
-	cache.mu.Lock()
 	cache.keys = newKeys
 	cache.fetchedAt = time.Now()
-	cache.mu.Unlock()
 
 	key, ok := newKeys[kid]
 	if !ok {

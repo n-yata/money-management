@@ -1,0 +1,12 @@
+// ローカル開発用の設定ファイル。
+// このファイルをコピーして environment.ts を作成し、実際の値を設定してください。
+// $ cp src/environments/environment.ts.example src/environments/environment.ts
+export const environment = {
+  production: false,
+  apiBaseUrl: 'http://localhost:3000/api/v1',
+  auth0: {
+    domain: '__AUTH0_DOMAIN__',
+    clientId: '__AUTH0_CLIENT_ID__',
+    audience: '__AUTH0_AUDIENCE__',
+  },
+};

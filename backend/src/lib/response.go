@@ -16,7 +16,8 @@ import (
 func allowOrigin() string {
 	origin := os.Getenv("CORS_ALLOW_ORIGIN")
 	if origin == "" {
-		return "*"
+		log.Printf("WARNING: CORS_ALLOW_ORIGIN is not set.")
+		return ""
 	}
 	return strings.Trim(origin, "'")
 }

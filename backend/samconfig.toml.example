@@ -1,0 +1,36 @@
+version = 0.1
+
+[default.local_start_api.parameters]
+env_vars = "env.json"
+port = 3000
+disable_authorizer = true  # WARNING: 本番環境では絶対に設定しないこと（Lambda Authorizerがスキップされ認証バイパスになる）
+parameter_overrides = [
+  "LocalAuth0Sub=local-dev-user",
+  "Environment=local",
+  "Auth0Domain=YOUR_AUTH0_DOMAIN",
+  "Auth0Audience=YOUR_AUTH0_AUDIENCE",
+  "MongoDBUri=YOUR_MONGODB_URI"
+]
+
+[default.local_invoke.parameters]
+env_vars = "env.json"
+parameter_overrides = [
+  "LocalAuth0Sub=local-dev-user",
+  "Environment=local",
+  "Auth0Domain=YOUR_AUTH0_DOMAIN",
+  "Auth0Audience=YOUR_AUTH0_AUDIENCE",
+  "MongoDBUri=YOUR_MONGODB_URI"
+]
+
+[default.deploy.parameters]
+stack_name = "money-management"
+resolve_s3 = true
+s3_prefix = "money-management"
+region = "ap-northeast-1"
+confirm_changeset = true
+capabilities = "CAPABILITY_IAM"
+parameter_overrides = "Auth0Domain=\"YOUR_AUTH0_DOMAIN\" Auth0Audience=\"YOUR_AUTH0_AUDIENCE\" LocalAuth0Sub=\"\" Environment=\"production\" AllowOrigin=\"'https://YOUR_GITHUB_USERNAME.github.io'\""
+image_repositories = []
+
+[default.global.parameters]
+region = "ap-northeast-1"
