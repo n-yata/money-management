@@ -1,0 +1,61 @@
+{
+  "name": "money-management",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": ".."
+  },
+
+  // ホストの認証情報・設定をマウント
+  "mounts": [
+    // Claude Code グローバル設定（メモリ書き込みが必要なので read-write）
+    "source=${localEnv:USERPROFILE}\\.claude,target=/root/.claude,type=bind,consistency=cached",
+    // AWS 認証情報（read-only: コンテナから書き換えさせない）
+    "source=${localEnv:USERPROFILE}\\.aws,target=/root/.aws,type=bind,readonly"
+  ],
+
+  // コンテナ初回作成後にフロントエンド依存関係をインストール
+  "postCreateCommand": "cd /workspaces/money-management/frontend && npm install",
+
+  // セキュリティ: 非 root ユーザーで実行
+  "remoteUser": "root",
+
+  // 権限昇格を禁止・不要な capability をドロップ
+  "runArgs": [
+    "--security-opt=no-new-privileges:true",
+    "--cap-drop=ALL",
+    "--cap-add=CHOWN",
+    "--cap-add=SETUID",
+    "--cap-add=SETGID",
+    "--cap-add=NET_BIND_SERVICE"
+  ],
+
+  // 開発サーバー用ポート（localhost のみ、自動公開しない）
+  "forwardPorts": [4200, 3000],
+  "portsAttributes": {
+    "4200": {
+      "label": "Angular Dev Server",
+      "onAutoForward": "silent"
+    },
+    "3000": {
+      "label": "SAM Local API",
+      "onAutoForward": "silent"
+    }
+  },
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "Angular.ng-template",
+        "golang.go",
+        "ms-azuretools.vscode-docker",
+        "amazonwebservices.aws-toolkit-vscode",
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode"
+      ],
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash",
+        "go.toolsManagement.autoUpdate": true
+      }
+    }
+  }
+}

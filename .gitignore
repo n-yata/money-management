@@ -21,6 +21,9 @@ frontend/dist/
 # Angular
 frontend/.angular/
 
+# Dev Container
+.devcontainer/.env
+
 # OS
 .DS_Store
 Thumbs.db
