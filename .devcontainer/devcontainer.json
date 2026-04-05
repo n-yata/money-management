@@ -8,16 +8,16 @@
   // ホストの認証情報・設定をマウント
   "mounts": [
     // Claude Code グローバル設定（メモリ書き込みが必要なので read-write）
-    "source=${localEnv:USERPROFILE}\\.claude,target=/root/.claude,type=bind,consistency=cached",
+    "source=${localEnv:USERPROFILE}\\.claude,target=/home/vscode/.claude,type=bind,consistency=cached",
     // AWS 認証情報（read-only: コンテナから書き換えさせない）
-    "source=${localEnv:USERPROFILE}\\.aws,target=/root/.aws,type=bind,readonly"
+    "source=${localEnv:USERPROFILE}\\.aws,target=/home/vscode/.aws,type=bind,readonly"
   ],
 
   // コンテナ初回作成後にフロントエンド依存関係をインストール
   "postCreateCommand": "cd /workspaces/money-management/frontend && npm install",
 
   // セキュリティ: 非 root ユーザーで実行
-  "remoteUser": "root",
+  "remoteUser": "vscode",
 
   // 権限昇格を禁止・不要な capability をドロップ
   "runArgs": [
