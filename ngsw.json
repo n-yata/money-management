@@ -1,6 +1,6 @@
 {
   "configVersion": 1,
-  "timestamp": 1775271627711,
+  "timestamp": 1775423560156,
   "index": "/money-management/index.html",
   "assetGroups": [
     {
@@ -82,9 +82,9 @@
     "/money-management/chunk-XLIY7RWL.js": "434de8345a6cb49a00cab3cff47494aad1843880",
     "/money-management/chunk-YXPQGZYP.js": "198e6a5b8db0f19d116bea026d16af0b9c691d61",
     "/money-management/favicon.ico": "0691feddeed5a9b3fa417b3e83ba70d769699b6c",
-    "/money-management/index.html": "66a98c51a9c0afeffea8f455b3b4ffc499f71738",
+    "/money-management/index.html": "b41e1a1152da6a057338c05b76908f9dcd48e418",
     "/money-management/main-W4JSREL7.js": "0fe46f9671b55414800fa23a52dd6b7e6fe41282",
-    "/money-management/manifest.webmanifest": "00519376f4f141d27871a06eb4a59e2b9549c117",
+    "/money-management/manifest.webmanifest": "ac9ced8d2ca107481c13d6d7dbdcd9ee94f62e0b",
     "/money-management/polyfills-B6TNHZQ6.js": "bf76ac291d7f51c1139b7edcf86b359a30c08c64",
     "/money-management/styles-DP3ZBWFL.css": "54ccbe71dca911368191fb78539ab2b2da556663"
   },
